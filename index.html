@@ -70,6 +70,20 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
 .btn{padding:7px 13px;border:1px solid var(--line-2);border-radius:7px;font-size:.85rem;font-weight:500;background:var(--surface-2)}
+.san{display:flex;align-items:center;gap:8px}
+.san input{width:110px;accent-color:var(--accent);margin:0}
+.san output{font-family:var(--display);font-weight:700;font-size:1.05rem;min-width:3.2ch;text-align:right}
+.san output.hot{color:var(--out)}
+.tog{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--line-2);border-radius:7px;font-size:.82rem;font-weight:500;color:var(--muted);background:var(--bg)}
+.tog .ic{width:16px;height:16px}
+.tog[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:var(--accent-bg)}
+.tog[aria-pressed="true"] .ic{color:var(--accent)}
+.hstrip{position:relative;height:5px;border-radius:3px;background:var(--line);margin-top:2px;overflow:visible}
+.hstrip .fill{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--muted-2)}
+.hstrip .fill.hot{background:var(--out)}
+.hstrip .fill.var{background:repeating-linear-gradient(90deg,var(--accent) 0 4px,transparent 4px 7px)}
+.hstrip .me{position:absolute;top:-3px;width:2px;height:11px;background:var(--fg);border-radius:1px;transform:translateX(-1px)}
+.hstrip .t{position:absolute;top:0;bottom:0;width:1px;background:var(--bg);opacity:.9}
 .btn:hover{border-color:var(--accent);color:var(--accent)}
 
 .wrap{max-width:1280px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:24px;align-items:start}
@@ -130,7 +144,8 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
 .answer.show{display:block}
 .answer .k{font-size:.8rem;color:var(--found);font-weight:600}
 .answer h2{font-size:2.6rem;line-height:1;margin:2px 0 10px;font-weight:700}
-.answer .chips{margin-bottom:12px}
+.answer .chips{margin-bottom:8px}
+.answer .hstrip{margin-bottom:14px;height:7px}
 .answer .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 20px;font-size:.88rem}
 .answer .facts p{margin:0}
 .lbl{font-size:.74rem;color:var(--muted);display:block;margin-bottom:1px;font-weight:500}
@@ -173,6 +188,7 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
 </head>
 <body>
 <svg class="sprite" aria-hidden="true">
+  <symbol id="i-head" viewBox="0 0 24 24"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-emf" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 17l2-4 2 3 2-6 2 7"/><path d="M8 7h8"/></symbol>
@@ -243,6 +259,12 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
         <button type="button" data-s="f" aria-pressed="false" title="Female model: any ghost is still possible">Female</button>
       </span>
     </div>
+    <div class="ctl san" title="Average team sanity. Ghost cards turn red on the hunt strip when they can hunt at this sanity.">
+      <span class="ctl-l">Sanity</span>
+      <input type="range" id="san" min="0" max="100" step="5" value="100" aria-label="Average team sanity">
+      <output id="sanv" for="san">100%</output>
+    </div>
+    <button type="button" class="tog" id="snd" aria-pressed="true" title="Headphones on: audio tells are shown. Turn off to hide tells you cannot hear."><svg class="ic" aria-hidden="true"><use href="#i-head"/></svg><span id="sndl">Sound on</span></button>
     <button type="button" class="btn" id="reset">New contract</button>
   </div>
 </header>
@@ -259,7 +281,7 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
       <div class="tabs" id="telltabs" role="tablist"></div>
       <div class="picked" id="picked"></div>
       <div class="tiles" id="tiles"></div>
-      <p class="legend">Hover or hold a tile for the full description and the ghosts it narrows to. Tiles marked "rules out" remove ghosts instead of keeping them. The Mimic copies behavior, so tells never rule it out.</p>
+      <p class="legend">Hover or hold a tile for the full description and the ghosts it narrows to. Tiles marked "rules out" remove ghosts instead of keeping them. The Mimic copies behavior, so tells never rule it out. With sound off, tells you need headphones for are hidden and ignored.</p>
     </section>
   </aside>
 
@@ -271,7 +293,7 @@ h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
       <div class="sect-h"><h2>Ruled out</h2><span class="hint">tap a name to see why</span></div>
       <div class="outchips" id="outchips"></div>
     </div>
-    <p class="foot">Phasmophobia 2026 ghost reference, 30 ghosts. Unless a card says otherwise: hunts at 50% sanity, 1.7 m/s, 90s smudge timer, 5s hunt blind. Clues save in this browser until you start a new contract.</p>
+    <p class="foot">Phasmophobia 2026 ghost reference, 30 ghosts. Unless a card says otherwise: hunts at 50% sanity, 1.7 m/s, 90s smudge timer, 5s hunt blind. The strip under each ghost is its hunt sanity range; the white mark is your sanity from the slider, and the strip turns red when that ghost can hunt you. Clues save in this browser until you start a new contract.</p>
   </section>
 </main>
 
@@ -290,36 +312,36 @@ const EVSHORT = Object.fromEntries(EV.map(e=>[e[0],e[2]]));
 
 // tags: short badges shown on the collapsed strip; only exceptions to the standard ghost.
 const G = [
- {n:'Aswang',ev:['Freezing','Writing','DOTS'],thr:'50%',spd:'1.53 m/s',sm:'90s standard. 5s hunt blind.',tags:['slightly slow'],beh:'Reaches max line-of-sight speedup in 8.6s (vs normal 13s). Ends the hunt immediately if it enters an official hiding spot with a detected player.',tell:"If a hunt ends in your hiding spot, it walks straight to that player's location at the start of the next hunt (even during the grace period).",gu:null},
- {n:'Banshee',ev:['UV','Orbs','DOTS'],thr:"50% (target's sanity)",spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['female only'],beh:'Targets one player at a time until they die (initial random, then host, then join order). 66% chance to roam toward its target without EMF. Prefers singing ghost events.',tell:'33% chance of a unique Banshee siren/wail on the Parabolic Microphone or Sound Recorder. Always a female model and female name.',gu:null},
- {n:'Dayan',ev:['EMF','Orbs','SpiritBox'],thr:'65% / 45% / 50%',spd:'2.25 / 1.2 / 1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts to 65%','speed varies','female only'],beh:'Sanity threshold and speed depend on player motion within 10m: walking nearby = 65% and 2.25 m/s; standing still nearby = 45% and 1.2 m/s; everyone beyond 10m = 50% and 1.7 m/s.',tell:'Distinct speed shifts based on how you move near it. Female model and name only.',gu:null},
- {n:'Deildegast',ev:['EMF','Writing','DOTS'],thr:'50%',spd:'3.0 m/s base, drops per item',sm:'90s standard. 5s hunt blind.',tags:['fast, slows per item'],beh:'Starts at 3.0 m/s. Loses 0.1 m/s for each unique non-equipment item players pick up or interact with between hunts (26 items = 0.4 m/s). No line-of-sight speedup.',tell:'Speed is locked during a hunt and recalculated between hunts from the objects you have handled.',gu:null},
- {n:'Demon',ev:['UV','Writing','Freezing'],thr:'70% (any % via ability)',spd:'1.7 m/s',sm:'60s smudge timer (exception, standard is 90s).',tags:['hunts at 70%','smudge 60s'],beh:'Can start a hunt at any sanity through a rare ability; normal threshold is 70%. Crucifix range is +50% per tier against Demons.',tell:'Can hunt only 20s after a previous hunt or crucifix burn (vs 25s). Smudge only blocks hunts for 60 seconds.',gu:null},
- {n:'Deogen',ev:['SpiritBox','Writing','DOTS'],thr:'40%',spd:'3.0 m/s far, 0.4 m/s close',sm:'90s standard. 5s hunt blind.',tags:['hunts at 40%','fast far, slow close'],beh:'Always knows where you are (hiding does not work). Moves 3.0 m/s when far from its target and slows to 0.4 m/s up close. Loop it around obstacles.',tell:'33% chance of a unique heavy breathing sound on the Spirit Box within 1m.',gu:'SpiritBox'},
- {n:'Gallu',ev:['EMF','UV','SpiritBox'],thr:'60% / 50% / 40%',spd:'1.96 / 1.7 / 1.36 m/s',sm:'Smudge blind 4s (Enraged) or 6s (Weakened). 90s timer.',tags:['3 states','smudge blind 4s/6s'],beh:'Cycles Normal (50%, 1.7 m/s) → Enraged (60%, 1.96 m/s) → Weakened (40%, 1.36 m/s). Cycles when it steps in salt, gets smudged, or a crucifix is used.',tell:'Enraged: ignores salt, smudge blind 4s, crucifix range -2m. Weakened: slow hunt, smudge blind 6s, crucifix +1m.',gu:null},
- {n:'Goryo',ev:['EMF','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['DOTS on camera only'],beh:'Never changes its favorite room. Rarely wanders away from it. Enters the DOTS state more often than other ghosts.',tell:'DOTS is only visible through a video camera, and only when no players are in the ghost room.',gu:'DOTS'},
- {n:'Hantu',ev:['UV','Orbs','Freezing'],thr:'50%',spd:'1.4 to 2.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['fast when cold'],beh:'Faster in cold rooms (2.7 m/s), slower in warm rooms (1.4 m/s). No line-of-sight speedup. More likely to turn the breaker off; cannot turn it on.',tell:'Visible freezing breath from the ghost during a hunt when the breaker is off or broken.',gu:'Freezing'},
- {n:'Jinn',ev:['EMF','UV','Freezing'],thr:'50%',spd:'1.7 m/s (2.5 m/s boost)',sm:'90s standard. 5s hunt blind.',tags:['2.5 m/s with breaker on'],beh:'With the breaker on, more than 3m away and line of sight, it speeds up to 2.5 m/s until close. Cannot turn the breaker off.',tell:"Ability: drops a nearby player's sanity by 25% and leaves EMF 2/5 at the fuse box (breaker must be on).",gu:null},
- {n:'Kormos',ev:['Orbs','SpiritBox','UV'],thr:'70% (sprinting) / 50%',spd:'1.7 / 2.21 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 70% if you sprint'],beh:'Can hunt at 70% if it detects a player sprinting in the same room. Cannot see players beyond 5m; moves 2.21 m/s when detecting someone beyond 5m through voice or electronics, 1.7 m/s within 5m.',tell:'Cannot perform airball/mist or chasing ghost events.',gu:null},
- {n:'Mare',ev:['SpiritBox','Orbs','Writing'],thr:'60% (light off) / 40% (light on)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['60% lights off, 40% on'],beh:'Hunts at 60% if the room light is off (or broken), 40% if on. Wanders more with lights on. Cannot turn lights, TVs or monitors on.',tell:'Immediately switches off a light or lamp a player turns on within 4m, even during ghost events.',gu:null},
- {n:'Moroi',ev:['SpiritBox','Writing','Freezing'],thr:'50%',spd:'1.5 to 2.25 m/s',sm:'Smudge blind 7s during hunt (vs 5s). 90s timer.',tags:['faster as sanity drops','smudge blind 7s'],beh:'Speed scales with how low average team sanity is: 1.5 m/s above 45%, up to 2.25 m/s at 0%.',tell:'Hearing a Spirit Box response or Parabolic/Recorder sound curses you: sanity drains 2x (cured by Sanity Meds).',gu:'SpiritBox'},
- {n:'Myling',ev:['EMF','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['quiet footsteps'],beh:'Footsteps and vocals during hunts are quiet and cannot be heard beyond 12m (normal is 20m).',tell:'Flashlight test: footsteps are only heard while your flashlight flickers (within 10m). More frequent parabolic sounds (every 64 to 128s vs 80 to 128s).',gu:null},
- {n:'Obake',ev:['EMF','UV','Orbs'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['odd fingerprints'],beh:'25% chance to leave no fingerprints. UV evidence fades twice as fast. 25% chance to skip footstep sounds during ghost events.',tell:'Unique prints: 6 fingers on doors/coolers, double prints on light switches, 5 fingers on keyboards. Shapeshifts its model on certain blinks during a hunt.',gu:'UV'},
- {n:'Obambo',ev:['Writing','UV','DOTS'],thr:'65% (Aggressive) / 10% (Calm)',spd:'1.96 / 1.45 m/s',sm:'90s standard. 5s hunt blind.',tags:['65% or 10%, swaps every 2 min'],beh:'Switches between Aggressive (65%, 1.96 m/s) and Calm (10%, 1.45 m/s) every 2 minutes.',tell:'Aggressive hunts are 20% shorter. Can switch state mid-hunt, changing speed instantly.',gu:null},
- {n:'Oni',ev:['EMF','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['very visible in hunts'],beh:'More active with several people nearby. Ghost events drain 20% sanity (vs 10%). Cannot perform airball/mist events.',tell:'Blinks much faster and stays visible longer during hunts, so the model is easy to see.',gu:null},
- {n:'Onryo',ev:['SpiritBox','Orbs','Freezing'],thr:'60% / any % (flame blowout)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 60%','flames'],beh:'Extinguishing a flame acts like a crucifix. Every 3rd flame it blows out triggers a hunt attempt regardless of sanity, unless another lit flame is within 4m. Cannot hunt within 4m of a lit flame.',tell:'Only ghost that blows out a flame within 30s of lighting, twice within 20s, or a lighter within 20s. Cannot ignite fire sources.',gu:null},
- {n:'Phantom',ev:['SpiritBox','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['invisible in photos'],beh:'Drains 0.5% sanity/sec while you are in heartbeat range during hunts and events. Roams toward a random player leaving head-height EMF 2.',tell:'Disappears when photographed (no ghost in the photo, no electronic glitch). Blinks very slowly during hunts, invisible for long stretches.',gu:null},
- {n:'Poltergeist',ev:['SpiritBox','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['throws everything'],beh:'Throws items more often and harder (an item every 0.5s during hunts).',tell:"Polterbomb: throws many items at once, dropping nearby players' sanity 2% per item.",gu:null},
- {n:'Raiju',ev:['EMF','Orbs','DOTS'],thr:'65% (near active tech) / 50%',spd:'2.5 m/s (tech) / 1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['65% and 2.5 m/s near tech'],beh:'Hunts at 65% near active player electronics. Moves 2.5 m/s near active electronics, 1.7 m/s otherwise.',tell:'Disrupts electronics and causes radio static from 15m away (vs 10m).',gu:null},
- {n:'Revenant',ev:['Orbs','Writing','Freezing'],thr:'50%',spd:'1.0 m/s roaming / 3.0 m/s targeted',sm:'90s standard. 5s hunt blind.',tags:['1.0 crawl, 3.0 when it sees you'],beh:'Crawls at 1.0 m/s while searching without line of sight or electronics. Jumps to 3.0 m/s the moment it detects a player or electronics.',tell:'Dramatic speed contrast: slow crawl, then a rocket.',gu:null},
- {n:'Shade',ev:['EMF','Writing','Freezing'],thr:'35%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 35%','shy'],beh:'Extremely shy. Cannot hunt, do ghost events, or EMF 2/3/5 interactions while a player is in the same room.',tell:'Only appears as a shadow during cursed possessions (Music Box, Summoning Circle, Monkey Paw). Cannot do singing events.',gu:null},
- {n:'Spirit',ev:['EMF','SpiritBox','Writing'],thr:'50%',spd:'1.7 m/s',sm:'180s smudge timer (exception, standard is 90s).',tags:['smudge 3 min'],beh:'Standard behavior and speed.',tell:'Smudging stops a Spirit from hunting for a full 3 minutes, double the normal 90s.',gu:null},
- {n:'Thaye',ev:['Orbs','Writing','DOTS'],thr:'75% (youngest) → 15% (oldest)',spd:'2.75 → 1.0 m/s',sm:'90s standard. 5s hunt blind.',tags:['75% and fast, ages down'],beh:'Ages every 1 to 2 minutes while a player is in its room. Starts at 75% threshold and 2.75 m/s, ages down to 15% and 1.0 m/s. No line-of-sight speedup.',tell:'Ouija Board reports an increasing age over time, and can state an age over 90.',gu:null},
- {n:'The Mimic',ev:['SpiritBox','UV','Freezing'],thr:'Variable (copied ghost)',spd:'Variable (copied ghost)',sm:'Variable (copied ghost).',tags:['copies any ghost'],beh:'Copies the speed, sanity thresholds, smudge rules and behaviors of other ghosts, switching every 30 to 120 seconds. Behavior tells cannot rule it out.',tell:'Always shows fake Ghost Orbs as a 4th evidence (Spirit Box + UV + Freezing + fake Orbs).',gu:'Orbs',mimic:true},
- {n:'The Twins',ev:['EMF','SpiritBox','Freezing'],thr:'50%',spd:'1.5 m/s (main) / 1.9 m/s (alt)',sm:'90s standard. 5s hunt blind.',tags:['1.5 or 1.9 m/s'],beh:'Either the Main Twin (1.5 m/s from the ghost location) or the Alt Twin (1.9 m/s, teleporting from a recent interaction spot) hunts, 50/50.',tell:'Interactions happen nearly simultaneously at short and long range, like two ghosts.',gu:null},
- {n:'Wraith',ev:['EMF','SpiritBox','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['never touches salt'],beh:'Can teleport to a random player leaving foot-height EMF 2/5 before returning to its room. Never touches or steps in salt.',tell:'Never disturbs salt or triggers the Tier 3 salt slowdown during hunts.',gu:null},
- {n:'Yokai',ev:['SpiritBox','Orbs','DOTS'],thr:'80% (talking) / 50% (quiet)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 80% if you talk'],beh:'Talking near a Yokai raises its hunt threshold to 80% (50% if quiet).',tell:'Poor hearing and radio detection during hunts: only 2.5m (vs 7.5m to 9m).',gu:null},
- {n:'Yurei',ev:['Orbs','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'Smudging traps it in its favorite room for 90s (no DOTS while trapped).',tags:['smudge traps it 90s'],beh:'Can slam a door fully shut and drop nearby player sanity by 15%.',tell:'Door interactions are always fully open or fully closed, never partial. Only ghost that closes exit doors outside hunts and events.',gu:null},
+ {n:'Aswang',h:[50, 50],ev:['Freezing','Writing','DOTS'],thr:'50%',spd:'1.53 m/s',sm:'90s standard. 5s hunt blind.',tags:['slightly slow'],beh:'Reaches max line-of-sight speedup in 8.6s (vs normal 13s). Ends the hunt immediately if it enters an official hiding spot with a detected player.',tell:"If a hunt ends in your hiding spot, it walks straight to that player's location at the start of the next hunt (even during the grace period).",gu:null},
+ {n:'Banshee',h:[50, 50],ev:['UV','Orbs','DOTS'],thr:"50% (target's sanity)",spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['female only'],beh:'Targets one player at a time until they die (initial random, then host, then join order). 66% chance to roam toward its target without EMF. Prefers singing ghost events.',tell:'33% chance of a unique Banshee siren/wail on the Parabolic Microphone or Sound Recorder. Always a female model and female name.',gu:null},
+ {n:'Dayan',h:[45, 65],ev:['EMF','Orbs','SpiritBox'],thr:'65% / 45% / 50%',spd:'2.25 / 1.2 / 1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts to 65%','speed varies','female only'],beh:'Sanity threshold and speed depend on player motion within 10m: walking nearby = 65% and 2.25 m/s; standing still nearby = 45% and 1.2 m/s; everyone beyond 10m = 50% and 1.7 m/s.',tell:'Distinct speed shifts based on how you move near it. Female model and name only.',gu:null},
+ {n:'Deildegast',h:[50, 50],ev:['EMF','Writing','DOTS'],thr:'50%',spd:'3.0 m/s base, drops per item',sm:'90s standard. 5s hunt blind.',tags:['fast, slows per item'],beh:'Starts at 3.0 m/s. Loses 0.1 m/s for each unique non-equipment item players pick up or interact with between hunts (26 items = 0.4 m/s). No line-of-sight speedup.',tell:'Speed is locked during a hunt and recalculated between hunts from the objects you have handled.',gu:null},
+ {n:'Demon',h:[70, 70],ev:['UV','Writing','Freezing'],thr:'70% (any % via ability)',spd:'1.7 m/s',sm:'60s smudge timer (exception, standard is 90s).',tags:['hunts at 70%','smudge 60s'],beh:'Can start a hunt at any sanity through a rare ability; normal threshold is 70%. Crucifix range is +50% per tier against Demons.',tell:'Can hunt only 20s after a previous hunt or crucifix burn (vs 25s). Smudge only blocks hunts for 60 seconds.',gu:null},
+ {n:'Deogen',h:[40, 40],ev:['SpiritBox','Writing','DOTS'],thr:'40%',spd:'3.0 m/s far, 0.4 m/s close',sm:'90s standard. 5s hunt blind.',tags:['hunts at 40%','fast far, slow close'],beh:'Always knows where you are (hiding does not work). Moves 3.0 m/s when far from its target and slows to 0.4 m/s up close. Loop it around obstacles.',tell:'33% chance of a unique heavy breathing sound on the Spirit Box within 1m.',gu:'SpiritBox'},
+ {n:'Gallu',h:[40, 60],ev:['EMF','UV','SpiritBox'],thr:'60% / 50% / 40%',spd:'1.96 / 1.7 / 1.36 m/s',sm:'Smudge blind 4s (Enraged) or 6s (Weakened). 90s timer.',tags:['3 states','smudge blind 4s/6s'],beh:'Cycles Normal (50%, 1.7 m/s) → Enraged (60%, 1.96 m/s) → Weakened (40%, 1.36 m/s). Cycles when it steps in salt, gets smudged, or a crucifix is used.',tell:'Enraged: ignores salt, smudge blind 4s, crucifix range -2m. Weakened: slow hunt, smudge blind 6s, crucifix +1m.',gu:null},
+ {n:'Goryo',h:[50, 50],ev:['EMF','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['DOTS on camera only'],beh:'Never changes its favorite room. Rarely wanders away from it. Enters the DOTS state more often than other ghosts.',tell:'DOTS is only visible through a video camera, and only when no players are in the ghost room.',gu:'DOTS'},
+ {n:'Hantu',h:[50, 50],ev:['UV','Orbs','Freezing'],thr:'50%',spd:'1.4 to 2.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['fast when cold'],beh:'Faster in cold rooms (2.7 m/s), slower in warm rooms (1.4 m/s). No line-of-sight speedup. More likely to turn the breaker off; cannot turn it on.',tell:'Visible freezing breath from the ghost during a hunt when the breaker is off or broken.',gu:'Freezing'},
+ {n:'Jinn',h:[50, 50],ev:['EMF','UV','Freezing'],thr:'50%',spd:'1.7 m/s (2.5 m/s boost)',sm:'90s standard. 5s hunt blind.',tags:['2.5 m/s with breaker on'],beh:'With the breaker on, more than 3m away and line of sight, it speeds up to 2.5 m/s until close. Cannot turn the breaker off.',tell:"Ability: drops a nearby player's sanity by 25% and leaves EMF 2/5 at the fuse box (breaker must be on).",gu:null},
+ {n:'Kormos',h:[50, 70],ev:['Orbs','SpiritBox','UV'],thr:'70% (sprinting) / 50%',spd:'1.7 / 2.21 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 70% if you sprint'],beh:'Can hunt at 70% if it detects a player sprinting in the same room. Cannot see players beyond 5m; moves 2.21 m/s when detecting someone beyond 5m through voice or electronics, 1.7 m/s within 5m.',tell:'Cannot perform airball/mist or chasing ghost events.',gu:null},
+ {n:'Mare',h:[40, 60],ev:['SpiritBox','Orbs','Writing'],thr:'60% (light off) / 40% (light on)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['60% lights off, 40% on'],beh:'Hunts at 60% if the room light is off (or broken), 40% if on. Wanders more with lights on. Cannot turn lights, TVs or monitors on.',tell:'Immediately switches off a light or lamp a player turns on within 4m, even during ghost events.',gu:null},
+ {n:'Moroi',h:[50, 50],ev:['SpiritBox','Writing','Freezing'],thr:'50%',spd:'1.5 to 2.25 m/s',sm:'Smudge blind 7s during hunt (vs 5s). 90s timer.',tags:['faster as sanity drops','smudge blind 7s'],beh:'Speed scales with how low average team sanity is: 1.5 m/s above 45%, up to 2.25 m/s at 0%.',tell:'Hearing a Spirit Box response or Parabolic/Recorder sound curses you: sanity drains 2x (cured by Sanity Meds).',gu:'SpiritBox'},
+ {n:'Myling',h:[50, 50],ev:['EMF','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['quiet footsteps'],beh:'Footsteps and vocals during hunts are quiet and cannot be heard beyond 12m (normal is 20m).',tell:'Flashlight test: footsteps are only heard while your flashlight flickers (within 10m). More frequent parabolic sounds (every 64 to 128s vs 80 to 128s).',gu:null},
+ {n:'Obake',h:[50, 50],ev:['EMF','UV','Orbs'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['odd fingerprints'],beh:'25% chance to leave no fingerprints. UV evidence fades twice as fast. 25% chance to skip footstep sounds during ghost events.',tell:'Unique prints: 6 fingers on doors/coolers, double prints on light switches, 5 fingers on keyboards. Shapeshifts its model on certain blinks during a hunt.',gu:'UV'},
+ {n:'Obambo',h:[10, 65],ev:['Writing','UV','DOTS'],thr:'65% (Aggressive) / 10% (Calm)',spd:'1.96 / 1.45 m/s',sm:'90s standard. 5s hunt blind.',tags:['65% or 10%, swaps every 2 min'],beh:'Switches between Aggressive (65%, 1.96 m/s) and Calm (10%, 1.45 m/s) every 2 minutes.',tell:'Aggressive hunts are 20% shorter. Can switch state mid-hunt, changing speed instantly.',gu:null},
+ {n:'Oni',h:[50, 50],ev:['EMF','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['very visible in hunts'],beh:'More active with several people nearby. Ghost events drain 20% sanity (vs 10%). Cannot perform airball/mist events.',tell:'Blinks much faster and stays visible longer during hunts, so the model is easy to see.',gu:null},
+ {n:'Onryo',h:[60, 60],ev:['SpiritBox','Orbs','Freezing'],thr:'60% / any % (flame blowout)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 60%','flames'],beh:'Extinguishing a flame acts like a crucifix. Every 3rd flame it blows out triggers a hunt attempt regardless of sanity, unless another lit flame is within 4m. Cannot hunt within 4m of a lit flame.',tell:'Only ghost that blows out a flame within 30s of lighting, twice within 20s, or a lighter within 20s. Cannot ignite fire sources.',gu:null},
+ {n:'Phantom',h:[50, 50],ev:['SpiritBox','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['invisible in photos'],beh:'Drains 0.5% sanity/sec while you are in heartbeat range during hunts and events. Roams toward a random player leaving head-height EMF 2.',tell:'Disappears when photographed (no ghost in the photo, no electronic glitch). Blinks very slowly during hunts, invisible for long stretches.',gu:null},
+ {n:'Poltergeist',h:[50, 50],ev:['SpiritBox','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['throws everything'],beh:'Throws items more often and harder (an item every 0.5s during hunts).',tell:"Polterbomb: throws many items at once, dropping nearby players' sanity 2% per item.",gu:null},
+ {n:'Raiju',h:[50, 65],ev:['EMF','Orbs','DOTS'],thr:'65% (near active tech) / 50%',spd:'2.5 m/s (tech) / 1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['65% and 2.5 m/s near tech'],beh:'Hunts at 65% near active player electronics. Moves 2.5 m/s near active electronics, 1.7 m/s otherwise.',tell:'Disrupts electronics and causes radio static from 15m away (vs 10m).',gu:null},
+ {n:'Revenant',h:[50, 50],ev:['Orbs','Writing','Freezing'],thr:'50%',spd:'1.0 m/s roaming / 3.0 m/s targeted',sm:'90s standard. 5s hunt blind.',tags:['1.0 crawl, 3.0 when it sees you'],beh:'Crawls at 1.0 m/s while searching without line of sight or electronics. Jumps to 3.0 m/s the moment it detects a player or electronics.',tell:'Dramatic speed contrast: slow crawl, then a rocket.',gu:null},
+ {n:'Shade',h:[35, 35],ev:['EMF','Writing','Freezing'],thr:'35%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 35%','shy'],beh:'Extremely shy. Cannot hunt, do ghost events, or EMF 2/3/5 interactions while a player is in the same room.',tell:'Only appears as a shadow during cursed possessions (Music Box, Summoning Circle, Monkey Paw). Cannot do singing events.',gu:null},
+ {n:'Spirit',h:[50, 50],ev:['EMF','SpiritBox','Writing'],thr:'50%',spd:'1.7 m/s',sm:'180s smudge timer (exception, standard is 90s).',tags:['smudge 3 min'],beh:'Standard behavior and speed.',tell:'Smudging stops a Spirit from hunting for a full 3 minutes, double the normal 90s.',gu:null},
+ {n:'Thaye',h:[15, 75],ev:['Orbs','Writing','DOTS'],thr:'75% (youngest) → 15% (oldest)',spd:'2.75 → 1.0 m/s',sm:'90s standard. 5s hunt blind.',tags:['75% and fast, ages down'],beh:'Ages every 1 to 2 minutes while a player is in its room. Starts at 75% threshold and 2.75 m/s, ages down to 15% and 1.0 m/s. No line-of-sight speedup.',tell:'Ouija Board reports an increasing age over time, and can state an age over 90.',gu:null},
+ {n:'The Mimic',h:null,ev:['SpiritBox','UV','Freezing'],thr:'Variable (copied ghost)',spd:'Variable (copied ghost)',sm:'Variable (copied ghost).',tags:['copies any ghost'],beh:'Copies the speed, sanity thresholds, smudge rules and behaviors of other ghosts, switching every 30 to 120 seconds. Behavior tells cannot rule it out.',tell:'Always shows fake Ghost Orbs as a 4th evidence (Spirit Box + UV + Freezing + fake Orbs).',gu:'Orbs',mimic:true},
+ {n:'The Twins',h:[50, 50],ev:['EMF','SpiritBox','Freezing'],thr:'50%',spd:'1.5 m/s (main) / 1.9 m/s (alt)',sm:'90s standard. 5s hunt blind.',tags:['1.5 or 1.9 m/s'],beh:'Either the Main Twin (1.5 m/s from the ghost location) or the Alt Twin (1.9 m/s, teleporting from a recent interaction spot) hunts, 50/50.',tell:'Interactions happen nearly simultaneously at short and long range, like two ghosts.',gu:null},
+ {n:'Wraith',h:[50, 50],ev:['EMF','SpiritBox','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['never touches salt'],beh:'Can teleport to a random player leaving foot-height EMF 2/5 before returning to its room. Never touches or steps in salt.',tell:'Never disturbs salt or triggers the Tier 3 salt slowdown during hunts.',gu:null},
+ {n:'Yokai',h:[50, 80],ev:['SpiritBox','Orbs','DOTS'],thr:'80% (talking) / 50% (quiet)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 80% if you talk'],beh:'Talking near a Yokai raises its hunt threshold to 80% (50% if quiet).',tell:'Poor hearing and radio detection during hunts: only 2.5m (vs 7.5m to 9m).',gu:null},
+ {n:'Yurei',h:[50, 50],ev:['Orbs','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'Smudging traps it in its favorite room for 90s (no DOTS while trapped).',tags:['smudge traps it 90s'],beh:'Can slam a door fully shut and drop nearby player sanity by 15%.',tell:'Door interactions are always fully open or fully closed, never partial. Only ghost that closes exit doors outside hunts and events.',gu:null},
 ];
 
 const TELLS = [
@@ -332,7 +354,7 @@ const TELLS = [
   {l:'Found me hiding',i:'i-hide',t:'Found me in a hiding spot every time, or ended the hunt the moment I hid',only:['Deogen','Aswang']},
   {l:'Fast blinks, very visible',i:'i-eyefast',t:'Blinked very fast and stayed visible a long time during the hunt',only:['Oni']},
   {l:'Slow blinks, long invisible',i:'i-eyeslow',t:'Blinked very slowly, invisible for long stretches during the hunt',only:['Phantom']},
-  {l:'Quiet footsteps',i:'i-foot',t:'Footsteps quiet or only audible while my flashlight flickered',only:['Myling']},
+  {l:'Quiet footsteps',audio:true,i:'i-foot',t:'Footsteps quiet or only audible while my flashlight flickered',only:['Myling']},
   {l:'Polterbomb',i:'i-bomb',t:'Threw many items at once',only:['Poltergeist']},
   {l:'Freezing breath',i:'i-breath',t:'Freezing breath visible from the ghost during a hunt (breaker off)',only:['Hantu']},
   {l:'Re-hunt under 25s',i:'i-clock',t:'Hunted again less than 25s after the last hunt or a crucifix burn',only:['Demon']},
@@ -353,8 +375,8 @@ const TELLS = [
   {l:'Flame blown out fast',i:'i-blow',t:'Blew out a flame right after lighting, or twice within 20s',only:['Onryo']},
   {l:'Lit a flame',i:'i-flame',t:'Ghost lit a candle or other fire source',excl:['Onryo']},
   {l:'Not in photo',i:'i-photo',t:'Ghost not visible in a photo, no glitch either',only:['Phantom']},
-  {l:'Heavy breathing',i:'i-radio',t:'Heavy breathing on the Spirit Box',only:['Deogen']},
-  {l:'Siren or wail',i:'i-dish',t:'Siren or wail on the Parabolic Mic or Sound Recorder',only:['Banshee']},
+  {l:'Heavy breathing',audio:true,i:'i-radio',t:'Heavy breathing on the Spirit Box',only:['Deogen']},
+  {l:'Siren or wail',audio:true,i:'i-dish',t:'Siren or wail on the Parabolic Mic or Sound Recorder',only:['Banshee']},
   {l:'Six-finger prints',i:'i-hand',t:'Six-finger, double, or five-finger fingerprints',only:['Obake']},
   {l:'No prints',i:'i-handslash',t:'Fingerprints missing after a clear interaction',only:['Obake']},
   {l:'DOTS on camera only',i:'i-video',t:'DOTS only visible through a video camera',only:['Goryo']},
@@ -362,11 +384,11 @@ const TELLS = [
   {l:'Fuse box EMF',i:'i-fuse',t:'EMF 2/5 at the fuse box with a 25% sanity drop',only:['Jinn']},
   {l:'Door slam or exit door',i:'i-door',t:'Door slammed fully shut with a sanity drop, or an exit door closed outside a hunt',only:['Yurei']},
   {l:'Twin interactions',i:'i-twins',t:'Interactions far apart at almost the same time',only:['The Twins']},
-  {l:'Far radio static',i:'i-antenna',t:'Radio static or electronics disrupted from unusually far away',only:['Raiju']},
+  {l:'Far radio static',audio:true,i:'i-antenna',t:'Radio static or electronics disrupted from unusually far away',only:['Raiju']},
  ]},
  {g:'Model',items:[
   {l:'Airball event',i:'i-airball',t:'Saw an airball / mist ghost event',excl:['Kormos','Oni']},
-  {l:'Singing event',i:'i-note',t:'Heard a singing ghost event',excl:['Shade']},
+  {l:'Singing event',audio:true,i:'i-note',t:'Heard a singing ghost event',excl:['Shade']},
   {l:'Event with me in room',i:'i-ghostroom',t:'Ghost event happened while I was in its room',excl:['Shade']},
   {l:'Shadow only',i:'i-shadow',t:'Appeared only as a shadow during a cursed possession',only:['Shade']},
   {l:'Shapeshifted',i:'i-shapeshift',t:'Ghost model changed shape between blinks',only:['Obake']},
@@ -376,13 +398,13 @@ const TELLS = [
 
 const ALLKEYS = EV.map(e=>e[0]);
 let S = load() || fresh();
-function fresh(){return {n:3,sex:'unk',tab:0,ev:Object.fromEntries(ALLKEYS.map(k=>[k,'unk'])),tells:{},open:{}}}
+function fresh(){return {n:3,sex:'unk',tab:0,san:100,snd:true,ev:Object.fromEntries(ALLKEYS.map(k=>[k,'unk'])),tells:{},open:{}}}
 const FEMALE_ONLY=['Banshee','Dayan'];
 function load(){try{const r=localStorage.getItem('phasmo-tracker-v2');if(!r)return null;const o=JSON.parse(r);if(!o||!o.ev)return null;return Object.assign(fresh(),o)}catch(e){return null}}
 function save(){try{localStorage.setItem('phasmo-tracker-v2',JSON.stringify(S))}catch(e){}}
 
 function tellId(gi,ii){return gi+'-'+ii}
-function activeTells(){const out=[];TELLS.forEach((g,gi)=>g.items.forEach((it,ii)=>{if(S.tells[tellId(gi,ii)])out.push({gi,ii,...it})}));return out}
+function activeTells(){const out=[];TELLS.forEach((g,gi)=>g.items.forEach((it,ii)=>{if(S.tells[tellId(gi,ii)]&&(S.snd||!it.audio))out.push({gi,ii,...it})}));return out}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}
 function icon(id,cls){return `<svg class="${cls||'ic'}" aria-hidden="true"><use href="#${id}"/></svg>`}
 
@@ -425,6 +447,9 @@ function renderEvidence(){
    </div>`).join('');
   document.querySelectorAll('#evcount button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===S.n)));
   document.querySelectorAll('#sex button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.s===S.sex)));
+  const sl=document.getElementById('san');if(+sl.value!==S.san)sl.value=S.san;
+  const sv=document.getElementById('sanv');sv.textContent=S.san+'%';sv.className=S.san<=50?'hot':'';
+  const sb=document.getElementById('snd');sb.setAttribute('aria-pressed',String(S.snd));document.getElementById('sndl').textContent=S.snd?'Sound on':'Sound off';
 }
 
 function tileFace(it){return it.tx?`<span class="tx">${it.tx}</span>`:icon(it.i)}
@@ -432,13 +457,14 @@ function tileFace(it){return it.tx?`<span class="tx">${it.tx}</span>`:icon(it.i)
 function renderTells(){
   const tabs=document.getElementById('telltabs');
   tabs.innerHTML=TELLS.map((g,gi)=>{
-    const on=g.items.filter((it,ii)=>S.tells[tellId(gi,ii)]).length;
+    const on=g.items.filter((it,ii)=>S.tells[tellId(gi,ii)]&&(S.snd||!it.audio)).length;
     return `<button type="button" role="tab" data-tab="${gi}" aria-pressed="${S.tab===gi}">${g.g}${on?`<span class="bd">${on}</span>`:''}</button>`}).join('');
   const act=activeTells();
   document.getElementById('picked').innerHTML=act.map(t=>`<button type="button" class="pchip" data-id="${tellId(t.gi,t.ii)}" title="Remove this clue">${t.tx?`<b>${t.tx}</b>`:icon(t.i)}${esc(t.l)}<span class="x">✕</span></button>`).join('');
   const g=TELLS[S.tab]||TELLS[0];
   const gi=TELLS.indexOf(g);
   document.getElementById('tiles').innerHTML=g.items.map((it,ii)=>{
+    if(!S.snd&&it.audio)return '';
     const id=tellId(gi,ii);
     const who=it.only?('Keeps: '+it.only.join(', ')):('Removes: '+it.excl.join(', '));
     return `<button type="button" class="tile ${it.excl?'excl':''}" data-id="${id}" aria-pressed="${!!S.tells[id]}" title="${esc(it.t)}&#10;${esc(who)}">${tileFace(it)}<span class="lb">${esc(it.l)}</span></button>`}).join('');
@@ -454,6 +480,14 @@ function chip(g,k){
   if(g.mimic&&k==='Orbs')title+=' (always shown, fake)';
   else if(g.gu===k)title+=' (guaranteed on Nightmare/Insanity)';
   return `<span class="${cls}" style="--evc:var(--ev-${k})" title="${title}">${EVSHORT[k]}</span>`;
+}
+function hstrip(g){
+  const me=`<i class="me" style="left:${S.san}%"></i>`;
+  const ticks='<i class="t" style="left:25%"></i><i class="t" style="left:50%"></i><i class="t" style="left:75%"></i>';
+  if(!g.h)return `<div class="hstrip" title="Hunt threshold: copies another ghost"><span class="fill var" style="left:0;right:0"></span>${ticks}${me}</div>`;
+  const [lo,hi]=g.h;const hot=S.san<=hi;
+  const w=Math.max(hi-lo,3);
+  return `<div class="hstrip" title="Hunts at ${lo===hi?hi+'%':lo+'% to '+hi+'%'} sanity${hot?' (can hunt at your sanity)':''}"><span class="fill ${hot?'hot':''}" style="left:${Math.min(lo,hi-3)}%;width:${w}%"></span>${ticks}${me}</div>`;
 }
 function tagHtml(g){
   const hi=/^hunts/.test(g.tags[0]||'');
@@ -476,6 +510,7 @@ function renderRoster(){
     ans.className='answer show';
     ans.innerHTML=`<div class="k">Only one ghost matches</div><h2>${g.n}</h2>
       <div class="chips">${keys.map(k=>chip(g,k)).join('')}</div>
+      ${hstrip(g)}
       <div class="facts">
         <p><span class="lbl">Hunts at</span>${g.thr}</p>
         <p><span class="lbl">Speed</span>${g.spd}</p>
@@ -492,6 +527,7 @@ function renderRoster(){
       <button type="button" class="card-top" data-exp="${g.n}" aria-expanded="${!!open}" title="${open?'Collapse':'Expand'} ${g.n}">
         <div class="card-h"><h3>${g.n}</h3><span class="tags">${tagHtml(g)}</span></div>
         <div class="chips">${keys.map(k=>chip(g,k)).join('')}</div>
+        ${hstrip(g)}
       </button>
       <div class="more">
         <p><span class="lbl">Hunts at</span>${g.thr}</p>
@@ -552,7 +588,9 @@ document.getElementById('outchips').addEventListener('click',e=>{
   const b=e.target.closest('button[data-why]');if(!b)return;
   const k='w:'+b.dataset.why;S.open[k]=!S.open[k];renderRoster();save();
 });
-document.getElementById('reset').addEventListener('click',()=>{const n=S.n,tab=S.tab;S=fresh();S.n=n;S.tab=tab;renderAll()});
+document.getElementById('san').addEventListener('input',e=>{S.san=+e.target.value;renderEvidence();renderRoster();save()});
+document.getElementById('snd').addEventListener('click',()=>{S.snd=!S.snd;renderAll()});
+document.getElementById('reset').addEventListener('click',()=>{const n=S.n,tab=S.tab,snd=S.snd;S=fresh();S.n=n;S.tab=tab;S.snd=snd;renderAll()});
 renderAll();
 </script>
 </body>
