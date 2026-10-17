@@ -5,151 +5,176 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Phasmo Ghost Tracker</title>
 <meta name="description" content="Phasmophobia ghost identification tracker: tick evidence and behavior tells, watch the 30-ghost list narrow.">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap">
 <style>
-/* Layout: sticky status bar; two columns (clue panel left, ghost roster right) that stack at phone width. Dark-first: an investigator's journal under a flashlight. */
+/* Layout: status bar with the remaining-count as the hero; clue panel left, ghost roster right; stacks on phones.
+   Dark-first. Palette built from Phasmophobia equipment: EMF red LED, UV violet, DOTS laser green, freezing ice, spirit box orange, orb white, journal tan. */
 :root{
-  --bg:#0c1013; --surface:#141a1f; --surface-2:#1b2329; --line:#27323a;
-  --fg:#e4eae7; --muted:#8c9a95; --accent:#e9b353; --accent-ink:#1a1206;
-  --good:#5fd38f; --good-bg:rgba(95,211,143,.14);
-  --bad:#e86060; --bad-bg:rgba(232,96,96,.14);
-  --emf:#8be0a4;
-  --display:'Special Elite','Courier New',monospace;
-  --body:'Atkinson Hyperlegible',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --bg:#0f141c; --surface:#161c26; --surface-2:#1e2633; --line:#2a3442; --line-2:#36414f;
+  --fg:#e9edf2; --muted:#8e9aab; --muted-2:#5f6b7b;
+  --accent:#9d85ff; --accent-bg:rgba(157,133,255,.16); --accent-ink:#13102a;
+  --found:#5be08c; --found-bg:rgba(91,224,140,.14);
+  --out:#f2555f; --out-bg:rgba(242,85,95,.13);
+  --ev-EMF:#ff6161; --ev-UV:#b79bff; --ev-Writing:#dcb66e; --ev-Freezing:#7fd3ff; --ev-DOTS:#6fe39a; --ev-Orbs:#efeadb; --ev-SpiritBox:#ffa552;
+  --display:'Barlow Semi Condensed','Arial Narrow',system-ui,sans-serif;
+  --body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
   color-scheme:dark;
 }
 @media (prefers-color-scheme: light){
   :root:not([data-theme="dark"]){
-    --bg:#f1ede3; --surface:#faf7f0; --surface-2:#ece6d8; --line:#d6cdb9;
-    --fg:#1c2226; --muted:#66706b; --accent:#b57a16; --accent-ink:#fff8ea;
-    --good:#1f8a4c; --good-bg:rgba(31,138,76,.13);
-    --bad:#c23b3b; --bad-bg:rgba(194,59,59,.12);
-    --emf:#2a8f55;
+    --bg:#ece7db; --surface:#f7f3ea; --surface-2:#e6e0d2; --line:#d2cab8; --line-2:#bfb7a4;
+    --fg:#1b2028; --muted:#5f6878; --muted-2:#8a92a0;
+    --accent:#6a4fd6; --accent-bg:rgba(106,79,214,.13); --accent-ink:#f6f3ff;
+    --found:#1d8f4f; --found-bg:rgba(29,143,79,.13);
+    --out:#c9323c; --out-bg:rgba(201,50,60,.12);
+    --ev-EMF:#d13b3b; --ev-UV:#7a5be0; --ev-Writing:#9c7224; --ev-Freezing:#1f8fc4; --ev-DOTS:#1f9a52; --ev-Orbs:#6f6a58; --ev-SpiritBox:#d4711a;
     color-scheme:light;
   }
 }
 :root[data-theme="light"]{
-  --bg:#f1ede3; --surface:#faf7f0; --surface-2:#ece6d8; --line:#d6cdb9;
-  --fg:#1c2226; --muted:#66706b; --accent:#b57a16; --accent-ink:#fff8ea;
-  --good:#1f8a4c; --good-bg:rgba(31,138,76,.13);
-  --bad:#c23b3b; --bad-bg:rgba(194,59,59,.12);
-  --emf:#2a8f55;
+  --bg:#ece7db; --surface:#f7f3ea; --surface-2:#e6e0d2; --line:#d2cab8; --line-2:#bfb7a4;
+  --fg:#1b2028; --muted:#5f6878; --muted-2:#8a92a0;
+  --accent:#6a4fd6; --accent-bg:rgba(106,79,214,.13); --accent-ink:#f6f3ff;
+  --found:#1d8f4f; --found-bg:rgba(29,143,79,.13);
+  --out:#c9323c; --out-bg:rgba(201,50,60,.12);
+  --ev-EMF:#d13b3b; --ev-UV:#7a5be0; --ev-Writing:#9c7224; --ev-Freezing:#1f8fc4; --ev-DOTS:#1f9a52; --ev-Orbs:#6f6a58; --ev-SpiritBox:#d4711a;
   color-scheme:light;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.4;font-variant-numeric:tabular-nums}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
-button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-h1,h2,h3{margin:0;text-wrap:balance}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:600;text-wrap:balance}
 .sprite{position:absolute;width:0;height:0;overflow:hidden}
+.ic{stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
 
+/* Status bar */
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--surface);border-bottom:1px solid var(--line)}
-.topbar-in{max-width:1240px;margin:0 auto;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.brand{font-family:var(--display);font-size:1.25rem;letter-spacing:.02em;display:flex;align-items:baseline;gap:10px}
-.brand small{font-family:var(--mono);font-size:.7rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
-.count{display:flex;align-items:baseline;gap:6px;font-family:var(--mono);font-variant-numeric:tabular-nums}
-.count b{font-size:1.6rem;line-height:1;color:var(--accent)}
-.count span{color:var(--muted);font-size:.8rem}
+.topbar-in{max-width:1280px;margin:0 auto;padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:700;font-size:1.05rem;letter-spacing:.01em;color:var(--muted)}
+.hero{display:flex;align-items:center;gap:12px;min-width:0}
+.hero .n{font-family:var(--display);font-weight:700;font-size:2.4rem;line-height:1;color:var(--fg);min-width:2ch;text-align:right}
+.hero .n.one{color:var(--found)}
+.hero .n.zero{color:var(--out)}
+.hero .lbl{font-size:.85rem;color:var(--muted);line-height:1.2}
+.hero .lbl b{display:block;color:var(--fg);font-weight:600}
+.bar{display:flex;gap:2px;margin-top:5px}
+.bar i{display:block;width:6px;height:5px;border-radius:1px;background:var(--line-2)}
+.bar i.on{background:var(--accent)}
 .spacer{flex:1}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--bg)}
-.seg button{padding:6px 10px;font-family:var(--mono);font-size:.78rem;color:var(--muted);border-right:1px solid var(--line)}
+.ctl{display:flex;align-items:center;gap:8px}
+.ctl-l{font-size:.78rem;color:var(--muted);font-weight:500}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:7px;overflow:hidden;background:var(--bg)}
+.seg button{padding:6px 11px;font-size:.82rem;font-weight:500;color:var(--muted);border-right:1px solid var(--line-2)}
 .seg button:last-child{border-right:0}
 .seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
-.seg-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:6px}
-.btn{padding:7px 12px;border:1px solid var(--line);border-radius:6px;font-size:.85rem;background:var(--surface-2)}
-.btn:hover{border-color:var(--accent)}
+.btn{padding:7px 13px;border:1px solid var(--line-2);border-radius:7px;font-size:.85rem;font-weight:500;background:var(--surface-2)}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
 
-.wrap{max-width:1240px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(300px,360px) minmax(0,1fr);gap:22px;align-items:start}
-@media (max-width:820px){.wrap{grid-template-columns:1fr}}
+.wrap{max-width:1280px;margin:0 auto;padding-block:18px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:840px){.wrap{grid-template-columns:1fr}}
 .panel{min-width:0}
-.sect{margin-bottom:22px}
+.sect{margin-bottom:24px}
 .sect-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
-.sect-h h2{font-family:var(--display);font-size:1.05rem;letter-spacing:.02em}
+.sect-h h2{font-size:1.1rem}
 .sect-h .hint{font-size:.78rem;color:var(--muted)}
 
 /* Evidence rows */
-.ev-list{display:flex;flex-direction:column;gap:6px}
-.ev{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
-.ev[data-state="found"]{border-color:var(--good);background:var(--good-bg)}
-.ev[data-state="out"]{border-color:var(--bad);background:var(--bad-bg)}
-.ev-name{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:9px}
-.ev-name .ic{width:22px;height:22px;flex:none;color:var(--muted)}
-.ev[data-state="found"] .ev-name .ic{color:var(--good)}
-.ev[data-state="out"] .ev-name .ic{color:var(--bad)}
-.tri{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--bg)}
-.tri button{width:40px;height:32px;display:grid;place-items:center;color:var(--muted);border-right:1px solid var(--line);font-family:var(--mono);font-size:.9rem}
-.tri button:last-child{border-right:0}
-.tri button[aria-pressed="true"].t-found{background:var(--good);color:#06240f}
-.tri button[aria-pressed="true"].t-out{background:var(--bad);color:#fff}
-.tri button[aria-pressed="true"].t-unk{background:var(--surface-2);color:var(--fg)}
+.ev-list{display:flex;flex-direction:column;gap:5px}
+.ev{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:6px 6px 6px 10px;border:1px solid var(--line);border-left:3px solid var(--evc);border-radius:8px;background:var(--surface)}
+.ev[data-state="found"]{border-color:var(--found);border-left-color:var(--found);background:var(--found-bg)}
+.ev[data-state="out"]{border-color:var(--out);border-left-color:var(--out);background:var(--out-bg)}
+.ev-name{font-weight:600;font-size:.92rem;display:flex;align-items:center;gap:9px;min-width:0}
+.ev-name .ic{width:22px;height:22px;flex:none;color:var(--evc)}
+.ev[data-state="out"] .ev-name{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--out)}
+.ev[data-state="out"] .ev-name .ic{color:var(--muted)}
+.duo{display:inline-flex;gap:4px}
+.duo button{height:34px;min-width:44px;padding:0 10px;border-radius:6px;border:1px solid var(--line-2);display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:.8rem;font-weight:600;color:var(--muted);background:var(--bg)}
+.duo button .ic{width:15px;height:15px;stroke-width:2.4}
+.duo button[aria-pressed="true"].b-found{background:var(--found);border-color:var(--found);color:#062a12}
+.duo button[aria-pressed="true"].b-out{background:var(--out);border-color:var(--out);color:#fff}
+.duo button:hover{border-color:var(--fg)}
 
-.notice{margin-top:10px;padding:9px 11px;border-radius:8px;border:1px dashed var(--accent);font-size:.84rem;color:var(--fg);background:var(--surface)}
+.notice{margin-top:10px;padding:9px 11px;border-radius:8px;border:1px solid var(--accent);font-size:.84rem;color:var(--fg);background:var(--accent-bg)}
 .notice b{color:var(--accent)}
 
-/* Tells: tabs + icon tiles */
-.ic{stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+/* Tells */
 .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px}
-.tabs button{padding:7px 4px;border:1px solid var(--line);border-radius:6px;font-size:.78rem;font-weight:700;background:var(--surface);color:var(--muted);display:flex;gap:5px;justify-content:center;align-items:center;min-width:0}
-.tabs button[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:var(--surface-2)}
-.tabs .bd{font-family:var(--mono);font-weight:600;font-size:.66rem;min-width:17px;padding:1px 5px;border-radius:999px;background:var(--accent);color:var(--accent-ink);line-height:1.3}
+.tabs button{padding:7px 4px;border:1px solid var(--line);border-radius:7px;font-size:.84rem;font-weight:600;background:var(--surface);color:var(--muted);display:flex;gap:6px;justify-content:center;align-items:center;min-width:0}
+.tabs button[aria-pressed="true"]{color:var(--fg);border-color:var(--accent);background:var(--accent-bg)}
+.tabs .bd{font-size:.7rem;font-weight:700;min-width:18px;padding:1px 6px;border-radius:999px;background:var(--accent);color:var(--accent-ink);line-height:1.4}
 .picked{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
-.picked .chip{cursor:pointer;border-color:var(--accent);color:var(--fg);display:inline-flex;align-items:center;gap:5px}
-.picked .chip:hover{background:var(--bad-bg);border-color:var(--bad);color:var(--bad)}
-.picked .chip .ic{width:13px;height:13px}
-.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-@media (max-width:820px){.tiles{grid-template-columns:repeat(4,1fr)}}
-@media (max-width:460px){.tiles{grid-template-columns:repeat(3,1fr)}}
-.tile{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;padding:11px 6px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:center;min-width:0;min-height:86px;transition:border-color .12s,background .12s}
-.tile .ic{width:28px;height:28px;flex:none;color:var(--muted)}
-.tile .tx{font-family:var(--mono);font-weight:600;font-size:1rem;height:28px;display:grid;place-items:center;color:var(--muted);letter-spacing:-.02em}
-.tile .lb{font-size:.72rem;line-height:1.2;color:var(--fg);text-wrap:balance}
-.tile:hover{border-color:var(--fg)}
-.tile[aria-pressed="true"]{border-color:var(--accent);background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--accent)}
+.picked:empty{display:none}
+.pchip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:500;padding:4px 8px 4px 7px;border-radius:999px;border:1px solid var(--accent);background:var(--accent-bg);color:var(--fg)}
+.pchip .ic{width:14px;height:14px;color:var(--accent)}
+.pchip b{color:var(--accent);font-family:var(--display);font-weight:700}
+.pchip:hover{border-color:var(--out);background:var(--out-bg)}
+.pchip:hover .x{color:var(--out)}
+.pchip .x{color:var(--muted);font-size:.8rem}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+@media (max-width:840px){.tiles{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:520px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:left;min-width:0;min-height:50px;transition:border-color .12s,background .12s}
+.tile .ic{width:26px;height:26px;flex:none;color:var(--muted)}
+.tile .tx{font-family:var(--display);font-weight:700;font-size:1.05rem;width:26px;flex:none;text-align:center;color:var(--muted);letter-spacing:-.02em}
+.tile .lb{font-size:.82rem;font-weight:500;line-height:1.2;color:var(--fg);min-width:0}
+.tile:hover{border-color:var(--line-2);background:var(--surface-2)}
+.tile[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-bg)}
 .tile[aria-pressed="true"] .ic,.tile[aria-pressed="true"] .tx{color:var(--accent)}
-.tile.excl .lb::after{content:" ⊘";color:var(--muted)}
-.legend{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.4}
+.tile.excl .lb::after{content:" (rules out)";color:var(--muted-2);font-weight:400;font-size:.74rem}
+.legend{font-size:.76rem;color:var(--muted);margin:8px 0 0;line-height:1.4}
 
 /* Ghost roster */
-.answer{display:none;margin-bottom:16px;padding:16px 18px;border-radius:10px;background:var(--accent);color:var(--accent-ink)}
+.answer{display:none;margin-bottom:14px;padding:16px 18px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--found);box-shadow:0 0 0 3px var(--found-bg)}
 .answer.show{display:block}
-.answer .k{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
-.answer h2{font-family:var(--display);font-size:2rem;line-height:1.1;margin-top:2px}
-.answer p{margin:6px 0 0;font-size:.92rem}
+.answer .k{font-size:.8rem;color:var(--found);font-weight:600}
+.answer h2{font-size:2.6rem;line-height:1;margin:2px 0 10px;font-weight:700}
+.answer .chips{margin-bottom:12px}
+.answer .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 20px;font-size:.88rem}
+.answer .facts p{margin:0}
+.lbl{font-size:.74rem;color:var(--muted);display:block;margin-bottom:1px;font-weight:500}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:6px;align-items:start}
-.card{border:1px solid var(--line);border-radius:7px;background:var(--surface);padding:0;min-width:0;display:flex;flex-direction:column}
+.card{border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0;display:flex;flex-direction:column}
 .card.open{grid-column:1/-1;border-color:var(--accent)}
-.card-top{display:flex;flex-direction:column;gap:5px;padding:7px 9px 8px;text-align:left;width:100%;border-radius:7px}
+.card-top{display:flex;flex-direction:column;gap:5px;padding:7px 9px 8px;text-align:left;width:100%;border-radius:8px}
 .card-top:hover{background:var(--surface-2)}
 .card-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px;min-width:0}
-.card-h h3{font-family:var(--display);font-size:.98rem;letter-spacing:.01em;white-space:nowrap;flex:none;overflow:visible}
-.card-h .thr{font-family:var(--mono);font-size:.66rem;color:var(--accent);margin-left:auto;text-align:right;min-width:0;line-height:1.3}
-.card .chips{gap:4px}
-.card .chip{font-size:.64rem;padding:2px 6px}
-.chips{display:flex;flex-wrap:wrap;gap:5px}
-.chip{font-family:var(--mono);font-size:.7rem;padding:3px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--bg)}
-.chip.on{border-color:var(--good);color:var(--good);background:var(--good-bg)}
-.chip.off{border-color:var(--bad);color:var(--bad);text-decoration:line-through;opacity:.8}
+.card-h h3{font-size:1.08rem;font-weight:600;white-space:nowrap;flex:none;letter-spacing:.005em}
+.tag{font-size:.7rem;font-weight:600;padding:1px 6px;border-radius:4px;background:var(--surface-2);color:var(--muted);white-space:nowrap;border:1px solid var(--line)}
+.tag.hi{color:var(--fg);border-color:var(--line-2)}
+.tag.warn{color:var(--out);border-color:transparent;background:var(--out-bg)}
+.tags{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:500;padding:2px 7px 2px 6px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--bg)}
+.chip::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--evc);flex:none;opacity:.9}
+.chip.on{border-color:var(--found);color:var(--fg);background:var(--found-bg)}
+.chip.off{border-color:transparent;color:var(--muted-2);text-decoration:line-through;text-decoration-color:var(--out)}
+.chip.off::before{opacity:.35}
 .chip.fake{border-style:dashed;border-color:var(--accent);color:var(--accent)}
 .chip.g{box-shadow:inset 0 0 0 1px var(--accent)}
-.card .more{display:none;border-top:1px solid var(--line);padding:9px 10px 10px;font-size:.82rem;color:var(--fg)}
-.card.open .more{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 18px}
+.card .more{display:none;border-top:1px solid var(--line);padding:10px 10px 11px;font-size:.84rem;color:var(--fg)}
+.card.open .more{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px 20px}
 .more p{margin:0;min-width:0}
-.more .lbl{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:1px}
-.card.one{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.card.one{border-color:var(--found)}
 
-.outlist{margin-top:22px}
-.outlist .chips .chip{cursor:default}
-.outlist .chips .chip:hover{border-color:var(--fg);color:var(--fg)}
-.empty{padding:22px;border:1px dashed var(--bad);border-radius:10px;color:var(--fg);background:var(--bad-bg);font-size:.9rem}
-.foot{margin-top:28px;font-size:.76rem;color:var(--muted);font-family:var(--mono)}
+.outlist{margin-top:24px}
+.outchips{display:flex;flex-wrap:wrap;gap:4px}
+.ochip{font-size:.76rem;font-weight:500;padding:3px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--bg);text-align:left}
+.ochip:hover{border-color:var(--line-2);color:var(--fg)}
+.ochip[aria-expanded="true"]{color:var(--fg);border-color:var(--out);background:var(--out-bg)}
+.ochip .why{display:none;color:var(--out);font-weight:400}
+.ochip[aria-expanded="true"] .why{display:inline}
+.ochip .why::before{content:" · "}
+.empty{padding:20px;border:1px solid var(--out);border-radius:10px;color:var(--fg);background:var(--out-bg);font-size:.9rem}
+.foot{margin-top:28px;font-size:.76rem;color:var(--muted-2);line-height:1.5}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <svg class="sprite" aria-hidden="true">
-  <!-- evidence -->
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-emf" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 17l2-4 2 3 2-6 2 7"/><path d="M8 7h8"/></symbol>
   <symbol id="i-uv" viewBox="0 0 24 24"><rect x="3" y="9" width="12" height="6" rx="1.5"/><path d="M15 10l5-1v6l-5-1"/><path d="M4 5l1.5 1.5M12 3l-1 2"/></symbol>
   <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2z"/><path d="M4 18a2 2 0 0 1 2-2h12"/><path d="M8 8h6M8 11h4"/></symbol>
@@ -157,7 +182,6 @@ h1,h2,h3{margin:0;text-wrap:balance}
   <symbol id="i-dots" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M7 8h.01M12 8h.01M17 8h.01M7 12h.01M12 12h.01M17 12h.01"/><path d="M8 20h8"/></symbol>
   <symbol id="i-orb" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/></symbol>
   <symbol id="i-radio" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="2"/><circle cx="8" cy="14" r="2.5"/><path d="M13 12h5M13 16h5"/><path d="M6 8l4-5"/></symbol>
-  <!-- hunt -->
   <symbol id="i-fast" viewBox="0 0 24 24"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l5.5-5.5"/><circle cx="12" cy="16" r="1.2"/><path d="M3 20h18"/></symbol>
   <symbol id="i-slow" viewBox="0 0 24 24"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l-5.5-5.5"/><circle cx="12" cy="16" r="1.2"/><path d="M3 20h18"/></symbol>
   <symbol id="i-shift" viewBox="0 0 24 24"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l-4-5M12 16l4-5" stroke-dasharray="2 2"/><circle cx="12" cy="16" r="1.2"/><path d="M3 20h18"/></symbol>
@@ -168,11 +192,8 @@ h1,h2,h3{margin:0;text-wrap:balance}
   <symbol id="i-bomb" viewBox="0 0 24 24"><rect x="9" y="12" width="6" height="6" rx="1"/><path d="M12 4v5M5.5 6.5l3 3M18.5 6.5l-3 3M3 14h4M17 14h4M6 21l2-2M18 21l-2-2"/></symbol>
   <symbol id="i-breath" viewBox="0 0 24 24"><path d="M7 5v10M3 9l4 2 4-2M3 11l4-2 4 2"/><path d="M13 8c2-1.5 4 1.5 7 0M13 12c2-1.5 4 1.5 7 0M13 16c2-1.5 4 1.5 7 0"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
-  <!-- smudge -->
-  <symbol id="i-incense" viewBox="0 0 24 24"><path d="M12 21V10"/><path d="M12 8c-2-2 2-3.5 0-6"/><path d="M6 21h12"/></symbol>
   <symbol id="i-salt" viewBox="0 0 24 24"><path d="M3 19c2-6 6-9 9-9s7 3 9 9z"/><path d="M8 7h.01M12 4h.01M16 7h.01"/><path d="M9 15h.01M12 13h.01M15 15h.01"/></symbol>
   <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1"/><rect x="9.5" y="11" width="5" height="4.5" rx=".6"/><path d="M10.7 11V9.6a1.3 1.3 0 0 1 2.6 0V11"/></symbol>
-  <!-- gear -->
   <symbol id="i-brkon" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/><rect x="9" y="6" width="6" height="9" rx="1"/><path d="M12 6.5v3.5"/><path d="M9 18h6"/></symbol>
   <symbol id="i-brkoff" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/><rect x="9" y="6" width="6" height="9" rx="1"/><path d="M12 11v3.5"/><path d="M9 18h6"/></symbol>
   <symbol id="i-bulbon" viewBox="0 0 24 24"><path d="M8.5 13.5a5 5 0 1 1 7 0c-1 1-1.5 2-1.5 3h-4c0-1-.5-2-1.5-3z"/><path d="M10 19h4M10.5 21h3"/><path d="M12 2v1.5M5 5l1 1M19 5l-1 1M3 11h1.5M19.5 11H21"/></symbol>
@@ -189,7 +210,6 @@ h1,h2,h3{margin:0;text-wrap:balance}
   <symbol id="i-door" viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="14.5" cy="12" r=".9"/><path d="M3 21h18"/></symbol>
   <symbol id="i-twins" viewBox="0 0 24 24"><path d="M2.5 20V9.5a4.5 4.5 0 0 1 9 0V20l-2.2-1.8L7 20l-2.3-1.8z"/><path d="M12.5 20V9.5a4.5 4.5 0 0 1 9 0V20l-2.2-1.8L17 20l-2.3-1.8z"/></symbol>
   <symbol id="i-antenna" viewBox="0 0 24 24"><path d="M12 21v-9"/><circle cx="12" cy="10" r="2"/><path d="M7.5 6.5a6.5 6.5 0 0 1 9 0M4.5 3.5a10.5 10.5 0 0 1 15 0"/></symbol>
-  <!-- model & events -->
   <symbol id="i-airball" viewBox="0 0 24 24"><circle cx="15" cy="9" r="4"/><path d="M11.5 11.5L4 19M9 9H3M14 14l-2 6" /></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l10-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></symbol>
   <symbol id="i-ghostroom" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="19" height="19" rx="1"/><path d="M7.5 18v-6a4.5 4.5 0 0 1 9 0v6l-1.8-1.5-1.5 1.5-1.2-1.5L10.8 18l-1.5-1.5z"/><path d="M10.5 12h.01M13.5 12h.01"/></symbol>
@@ -200,11 +220,14 @@ h1,h2,h3{margin:0;text-wrap:balance}
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brand">Ghost Tracker <small>Phasmophobia 2026</small></div>
-    <div class="count"><b id="remain">30</b><span>of 30 possible</span></div>
+    <div class="brand">Phasmo Ghost Tracker</div>
+    <div class="hero">
+      <div class="n" id="remain">30</div>
+      <div class="lbl"><b id="remain-lbl">ghosts possible</b><span id="remain-sub">of 30</span><div class="bar" id="bar" aria-hidden="true"></div></div>
+    </div>
     <div class="spacer"></div>
-    <div>
-      <span class="seg-label">Evidence</span>
+    <div class="ctl">
+      <span class="ctl-l">Evidence</span>
       <span class="seg" id="evcount" role="group" aria-label="Evidence count for this difficulty">
         <button type="button" data-n="3" aria-pressed="true" title="Amateur to Professional">3</button>
         <button type="button" data-n="2" aria-pressed="false" title="Nightmare">2</button>
@@ -212,8 +235,8 @@ h1,h2,h3{margin:0;text-wrap:balance}
         <button type="button" data-n="0" aria-pressed="false" title="Zero evidence">0</button>
       </span>
     </div>
-    <div>
-      <span class="seg-label">Model</span>
+    <div class="ctl">
+      <span class="ctl-l">Model</span>
       <span class="seg" id="sex" role="group" aria-label="Ghost model">
         <button type="button" data-s="unk" aria-pressed="true" title="Not seen yet">?</button>
         <button type="button" data-s="m" aria-pressed="false" title="Male model rules out Banshee and Dayan">Male</button>
@@ -227,7 +250,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 <main class="wrap">
   <aside class="panel">
     <section class="sect">
-      <div class="sect-h"><h2>Evidence</h2><span class="hint">✓ found &nbsp;· &nbsp;✕ ruled out</span></div>
+      <div class="sect-h"><h2>Evidence</h2><span class="hint">tap again to clear</span></div>
       <div class="ev-list" id="evlist"></div>
       <div class="notice" id="notice" hidden></div>
     </section>
@@ -236,7 +259,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
       <div class="tabs" id="telltabs" role="tablist"></div>
       <div class="picked" id="picked"></div>
       <div class="tiles" id="tiles"></div>
-      <p class="legend">Hold or hover a tile for the full description and which ghosts it narrows to. ⊘ marks a tile that removes ghosts instead of keeping them.</p>
+      <p class="legend">Hover or hold a tile for the full description and the ghosts it narrows to. Tiles marked "rules out" remove ghosts instead of keeping them. The Mimic copies behavior, so tells never rule it out.</p>
     </section>
   </aside>
 
@@ -245,10 +268,10 @@ h1,h2,h3{margin:0;text-wrap:balance}
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>Nothing matches. One of the clues is wrong, the evidence count is set too low, or it is a Mimic showing fake orbs. Untick the least certain clue first.</div>
     <div class="outlist" id="outlist" hidden>
-      <div class="sect-h"><h2>Ruled out</h2><span class="hint" id="outn"></span></div>
-      <div class="chips" id="outchips"></div>
+      <div class="sect-h"><h2>Ruled out</h2><span class="hint">tap a name to see why</span></div>
+      <div class="outchips" id="outchips"></div>
     </div>
-    <p class="foot">Data: Phasmophobia 2026 Complete Ghost Reference (30 ghosts). Standard smudge timer 90s, hunt blind 5s, hunt speed 1.7 m/s unless noted. Clues save in this browser until you start a new contract.</p>
+    <p class="foot">Phasmophobia 2026 ghost reference, 30 ghosts. Unless a card says otherwise: hunts at 50% sanity, 1.7 m/s, 90s smudge timer, 5s hunt blind. Clues save in this browser until you start a new contract.</p>
   </section>
 </main>
 
@@ -256,7 +279,7 @@ h1,h2,h3{margin:0;text-wrap:balance}
 const EV = [
   ['EMF','EMF Level 5','EMF','i-emf'],
   ['UV','Ultraviolet','UV','i-uv'],
-  ['Writing','Ghost Writing','Book','i-book'],
+  ['Writing','Ghost Writing','Writing','i-book'],
   ['Freezing','Freezing Temperatures','Freezing','i-snow'],
   ['DOTS','D.O.T.S. Projector','DOTS','i-dots'],
   ['Orbs','Ghost Orbs','Orbs','i-orb'],
@@ -265,44 +288,44 @@ const EV = [
 const EVNAME = Object.fromEntries(EV.map(e=>[e[0],e[1]]));
 const EVSHORT = Object.fromEntries(EV.map(e=>[e[0],e[2]]));
 
+// tags: short badges shown on the collapsed strip; only exceptions to the standard ghost.
 const G = [
- {n:'Aswang',ev:['Freezing','Writing','DOTS'],thr:'50%',spd:'1.53 m/s',sm:'90s standard. 5s hunt blind.',beh:'Reaches max line-of-sight speedup in 8.6s (vs normal 13s). Ends the hunt immediately if it enters an official hiding spot with a detected player.',tell:"If a hunt ends in your hiding spot, it walks straight to that player's location at the start of the next hunt (even during the grace period).",gu:null},
- {n:'Banshee',ev:['UV','Orbs','DOTS'],thr:"50% (target's sanity)",spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Targets one player at a time until they die (initial random, then host, then join order). 66% chance to roam toward its target without EMF. Prefers singing ghost events.',tell:'33% chance of a unique Banshee siren/wail on the Parabolic Microphone or Sound Recorder. Always a female model and female name.',gu:null},
- {n:'Dayan',ev:['EMF','Orbs','SpiritBox'],thr:'65% / 45% / 50%',spd:'2.25 / 1.2 / 1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Sanity threshold and speed depend on player motion within 10m: walking nearby = 65% and 2.25 m/s; standing still nearby = 45% and 1.2 m/s; everyone beyond 10m = 50% and 1.7 m/s.',tell:'Distinct speed shifts based on how you move near it. Female model and name only.',gu:null},
- {n:'Deildegast',ev:['EMF','Writing','DOTS'],thr:'50%',spd:'3.0 m/s base, drops per item',sm:'90s standard. 5s hunt blind.',beh:'Starts at 3.0 m/s. Loses 0.1 m/s for each unique non-equipment item players pick up or interact with between hunts (26 items = 0.4 m/s). No line-of-sight speedup.',tell:'Speed is locked during a hunt and recalculated between hunts from the objects you have handled. Also called Glass.',gu:null},
- {n:'Demon',ev:['UV','Writing','Freezing'],thr:'70% (any % via ability)',spd:'1.7 m/s',sm:'60s smudge timer (exception, standard is 90s).',beh:'Can start a hunt at any sanity through a rare ability; normal threshold is 70%. Crucifix range is +50% per tier against Demons.',tell:'Can hunt only 20s after a previous hunt or crucifix burn (vs 25s). Smudge only blocks hunts for 60 seconds.',gu:null},
- {n:'Deogen',ev:['SpiritBox','Writing','DOTS'],thr:'40%',spd:'3.0 m/s far, 0.4 m/s close',sm:'90s standard. 5s hunt blind.',beh:'Always knows where you are (hiding does not work). Moves 3.0 m/s when far from its target and slows to 0.4 m/s up close. Loop it around obstacles.',tell:'33% chance of a unique heavy breathing sound on the Spirit Box within 1m.',gu:'SpiritBox'},
- {n:'Gallu',ev:['EMF','UV','SpiritBox'],thr:'60% / 50% / 40%',spd:'1.96 / 1.7 / 1.36 m/s',sm:'Smudge blind 4s (Enraged) or 6s (Weakened). 90s timer.',beh:'Cycles Normal (50%, 1.7 m/s) → Enraged (60%, 1.96 m/s) → Weakened (40%, 1.36 m/s). Cycles when it steps in salt, gets smudged, or a crucifix is used.',tell:'Enraged: ignores salt, smudge blind 4s, crucifix range -2m. Weakened: slow hunt, smudge blind 6s, crucifix +1m.',gu:null},
- {n:'Goryo',ev:['EMF','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Never changes its favorite room. Rarely wanders away from it. Enters the DOTS state more often than other ghosts.',tell:'DOTS is only visible through a video camera, and only when no players are in the ghost room.',gu:'DOTS'},
- {n:'Hantu',ev:['UV','Orbs','Freezing'],thr:'50%',spd:'1.4 to 2.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Faster in cold rooms (2.7 m/s), slower in warm rooms (1.4 m/s). No line-of-sight speedup. More likely to turn the breaker off; cannot turn it on.',tell:'Visible freezing breath from the ghost during a hunt when the breaker is off or broken.',gu:'Freezing'},
- {n:'Jinn',ev:['EMF','UV','Freezing'],thr:'50%',spd:'1.7 m/s (2.5 m/s boost)',sm:'90s standard. 5s hunt blind.',beh:'With the breaker on, more than 3m away and line of sight, it speeds up to 2.5 m/s until close. Cannot turn the breaker off.',tell:"Ability: drops a nearby player's sanity by 25% and leaves EMF 2/5 at the fuse box (breaker must be on).",gu:null},
- {n:'Kormos',ev:['Orbs','SpiritBox','UV'],thr:'70% (sprinting) / 50%',spd:'1.7 / 2.21 m/s',sm:'90s standard. 5s hunt blind.',beh:'Can hunt at 70% if it detects a player sprinting in the same room. Cannot see players beyond 5m; moves 2.21 m/s when detecting someone beyond 5m through voice or electronics, 1.7 m/s within 5m.',tell:'Cannot perform airball/mist or chasing ghost events.',gu:null},
- {n:'Mare',ev:['SpiritBox','Orbs','Writing'],thr:'60% (light off) / 40% (light on)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Hunts at 60% if the room light is off (or broken), 40% if on. Wanders more with lights on. Cannot turn lights, TVs or monitors on.',tell:'Immediately switches off a light or lamp a player turns on within 4m, even during ghost events.',gu:null},
- {n:'Moroi',ev:['SpiritBox','Writing','Freezing'],thr:'50%',spd:'1.5 to 2.25 m/s',sm:'Smudge blind 7s during hunt (vs 5s). 90s timer.',beh:'Speed scales with how low average team sanity is: 1.5 m/s above 45%, up to 2.25 m/s at 0%.',tell:'Hearing a Spirit Box response or Parabolic/Recorder sound curses you: sanity drains 2x (cured by Sanity Meds).',gu:'SpiritBox'},
- {n:'Myling',ev:['EMF','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Footsteps and vocals during hunts are quiet and cannot be heard beyond 12m (normal is 20m).',tell:'Flashlight test: footsteps are only heard while your flashlight flickers (within 10m). More frequent parabolic sounds (every 64 to 128s vs 80 to 128s).',gu:null},
- {n:'Obake',ev:['EMF','UV','Orbs'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'25% chance to leave no fingerprints. UV evidence fades twice as fast. 25% chance to skip footstep sounds during ghost events.',tell:'Unique prints: 6 fingers on doors/coolers, double prints on light switches, 5 fingers on keyboards. Shapeshifts its model on certain blinks during a hunt.',gu:'UV'},
- {n:'Obambo',ev:['Writing','UV','DOTS'],thr:'65% (Aggressive) / 10% (Calm)',spd:'1.96 / 1.45 m/s',sm:'90s standard. 5s hunt blind.',beh:'Switches between Aggressive (65%, 1.96 m/s) and Calm (10%, 1.45 m/s) every 2 minutes.',tell:'Aggressive hunts are 20% shorter. Can switch state mid-hunt, changing speed instantly.',gu:null},
- {n:'Oni',ev:['EMF','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'More active with several people nearby. Ghost events drain 20% sanity (vs 10%). Cannot perform airball/mist events.',tell:'Blinks much faster and stays visible longer during hunts, so the model is easy to see.',gu:null},
- {n:'Onryo',ev:['SpiritBox','Orbs','Freezing'],thr:'60% / any % (flame blowout)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Extinguishing a flame acts like a crucifix. Every 3rd flame it blows out triggers a hunt attempt regardless of sanity, unless another lit flame is within 4m. Cannot hunt within 4m of a lit flame.',tell:'Only ghost that blows out a flame within 30s of lighting, twice within 20s, or a lighter within 20s. Cannot ignite fire sources.',gu:null},
- {n:'Phantom',ev:['SpiritBox','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Drains 0.5% sanity/sec while you are in heartbeat range during hunts and events. Roams toward a random player leaving head-height EMF 2.',tell:'Disappears when photographed (no ghost in the photo, no electronic glitch). Blinks very slowly during hunts, invisible for long stretches.',gu:null},
- {n:'Poltergeist',ev:['SpiritBox','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Throws items more often and harder (an item every 0.5s during hunts).',tell:"Polterbomb: throws many items at once, dropping nearby players' sanity 2% per item.",gu:null},
- {n:'Raiju',ev:['EMF','Orbs','DOTS'],thr:'65% (near active tech) / 50%',spd:'2.5 m/s (tech) / 1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Hunts at 65% near active player electronics. Moves 2.5 m/s near active electronics, 1.7 m/s otherwise.',tell:'Disrupts electronics and causes radio static from 15m away (vs 10m).',gu:null},
- {n:'Revenant',ev:['Orbs','Writing','Freezing'],thr:'50%',spd:'1.0 m/s roaming / 3.0 m/s targeted',sm:'90s standard. 5s hunt blind.',beh:'Crawls at 1.0 m/s while searching without line of sight or electronics. Jumps to 3.0 m/s the moment it detects a player or electronics.',tell:'Dramatic speed contrast: slow crawl, then a rocket.',gu:null},
- {n:'Shade',ev:['EMF','Writing','Freezing'],thr:'35%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Extremely shy. Cannot hunt, do ghost events, or EMF 2/3/5 interactions while a player is in the same room.',tell:'Only appears as a shadow during cursed possessions (Music Box, Summoning Circle, Monkey Paw). Cannot do singing events.',gu:null},
- {n:'Spirit',ev:['EMF','SpiritBox','Writing'],thr:'50%',spd:'1.7 m/s',sm:'180s smudge timer (exception, standard is 90s).',beh:'Standard behavior and speed.',tell:'Smudging stops a Spirit from hunting for a full 3 minutes, double the normal 90s.',gu:null},
- {n:'Thaye',ev:['Orbs','Writing','DOTS'],thr:'75% (youngest) → 15% (oldest)',spd:'2.75 → 1.0 m/s',sm:'90s standard. 5s hunt blind.',beh:'Ages every 1 to 2 minutes while a player is in its room. Starts at 75% threshold and 2.75 m/s, ages down to 15% and 1.0 m/s. No line-of-sight speedup.',tell:'Ouija Board reports an increasing age over time, and can state an age over 90.',gu:null},
- {n:'The Mimic',ev:['SpiritBox','UV','Freezing'],thr:'Variable (copied ghost)',spd:'Variable (copied ghost)',sm:'Variable (copied ghost).',beh:'Copies the speed, sanity thresholds, smudge rules and behaviors of other ghosts, switching every 30 to 120 seconds. Behavior tells cannot rule it out.',tell:'Always shows fake Ghost Orbs as a 4th evidence (Spirit Box + UV + Freezing + fake Orbs).',gu:'Orbs',mimic:true},
- {n:'The Twins',ev:['EMF','SpiritBox','Freezing'],thr:'50%',spd:'1.5 m/s (main) / 1.9 m/s (alt)',sm:'90s standard. 5s hunt blind.',beh:'Either the Main Twin (1.5 m/s from the ghost location) or the Alt Twin (1.9 m/s, teleporting from a recent interaction spot) hunts, 50/50.',tell:'Interactions happen nearly simultaneously at short and long range, like two ghosts.',gu:null},
- {n:'Wraith',ev:['EMF','SpiritBox','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Can teleport to a random player leaving foot-height EMF 2/5 before returning to its room. Never touches or steps in salt.',tell:'Never disturbs salt or triggers the Tier 3 salt slowdown during hunts.',gu:null},
- {n:'Yokai',ev:['SpiritBox','Orbs','DOTS'],thr:'80% (talking) / 50% (quiet)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',beh:'Talking near a Yokai raises its hunt threshold to 80% (50% if quiet).',tell:'Poor hearing and radio detection during hunts: only 2.5m (vs 7.5m to 9m).',gu:null},
- {n:'Yurei',ev:['Orbs','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'Smudging traps it in its favorite room for 90s (no DOTS while trapped).',beh:'Can slam a door fully shut and drop nearby player sanity by 15%.',tell:'Door interactions are always fully open or fully closed, never partial. Only ghost that closes exit doors outside hunts and events.',gu:null},
+ {n:'Aswang',ev:['Freezing','Writing','DOTS'],thr:'50%',spd:'1.53 m/s',sm:'90s standard. 5s hunt blind.',tags:['slightly slow'],beh:'Reaches max line-of-sight speedup in 8.6s (vs normal 13s). Ends the hunt immediately if it enters an official hiding spot with a detected player.',tell:"If a hunt ends in your hiding spot, it walks straight to that player's location at the start of the next hunt (even during the grace period).",gu:null},
+ {n:'Banshee',ev:['UV','Orbs','DOTS'],thr:"50% (target's sanity)",spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['female only'],beh:'Targets one player at a time until they die (initial random, then host, then join order). 66% chance to roam toward its target without EMF. Prefers singing ghost events.',tell:'33% chance of a unique Banshee siren/wail on the Parabolic Microphone or Sound Recorder. Always a female model and female name.',gu:null},
+ {n:'Dayan',ev:['EMF','Orbs','SpiritBox'],thr:'65% / 45% / 50%',spd:'2.25 / 1.2 / 1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts to 65%','speed varies','female only'],beh:'Sanity threshold and speed depend on player motion within 10m: walking nearby = 65% and 2.25 m/s; standing still nearby = 45% and 1.2 m/s; everyone beyond 10m = 50% and 1.7 m/s.',tell:'Distinct speed shifts based on how you move near it. Female model and name only.',gu:null},
+ {n:'Deildegast',ev:['EMF','Writing','DOTS'],thr:'50%',spd:'3.0 m/s base, drops per item',sm:'90s standard. 5s hunt blind.',tags:['fast, slows per item'],beh:'Starts at 3.0 m/s. Loses 0.1 m/s for each unique non-equipment item players pick up or interact with between hunts (26 items = 0.4 m/s). No line-of-sight speedup.',tell:'Speed is locked during a hunt and recalculated between hunts from the objects you have handled.',gu:null},
+ {n:'Demon',ev:['UV','Writing','Freezing'],thr:'70% (any % via ability)',spd:'1.7 m/s',sm:'60s smudge timer (exception, standard is 90s).',tags:['hunts at 70%','smudge 60s'],beh:'Can start a hunt at any sanity through a rare ability; normal threshold is 70%. Crucifix range is +50% per tier against Demons.',tell:'Can hunt only 20s after a previous hunt or crucifix burn (vs 25s). Smudge only blocks hunts for 60 seconds.',gu:null},
+ {n:'Deogen',ev:['SpiritBox','Writing','DOTS'],thr:'40%',spd:'3.0 m/s far, 0.4 m/s close',sm:'90s standard. 5s hunt blind.',tags:['hunts at 40%','fast far, slow close'],beh:'Always knows where you are (hiding does not work). Moves 3.0 m/s when far from its target and slows to 0.4 m/s up close. Loop it around obstacles.',tell:'33% chance of a unique heavy breathing sound on the Spirit Box within 1m.',gu:'SpiritBox'},
+ {n:'Gallu',ev:['EMF','UV','SpiritBox'],thr:'60% / 50% / 40%',spd:'1.96 / 1.7 / 1.36 m/s',sm:'Smudge blind 4s (Enraged) or 6s (Weakened). 90s timer.',tags:['3 states','smudge blind 4s/6s'],beh:'Cycles Normal (50%, 1.7 m/s) → Enraged (60%, 1.96 m/s) → Weakened (40%, 1.36 m/s). Cycles when it steps in salt, gets smudged, or a crucifix is used.',tell:'Enraged: ignores salt, smudge blind 4s, crucifix range -2m. Weakened: slow hunt, smudge blind 6s, crucifix +1m.',gu:null},
+ {n:'Goryo',ev:['EMF','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['DOTS on camera only'],beh:'Never changes its favorite room. Rarely wanders away from it. Enters the DOTS state more often than other ghosts.',tell:'DOTS is only visible through a video camera, and only when no players are in the ghost room.',gu:'DOTS'},
+ {n:'Hantu',ev:['UV','Orbs','Freezing'],thr:'50%',spd:'1.4 to 2.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['fast when cold'],beh:'Faster in cold rooms (2.7 m/s), slower in warm rooms (1.4 m/s). No line-of-sight speedup. More likely to turn the breaker off; cannot turn it on.',tell:'Visible freezing breath from the ghost during a hunt when the breaker is off or broken.',gu:'Freezing'},
+ {n:'Jinn',ev:['EMF','UV','Freezing'],thr:'50%',spd:'1.7 m/s (2.5 m/s boost)',sm:'90s standard. 5s hunt blind.',tags:['2.5 m/s with breaker on'],beh:'With the breaker on, more than 3m away and line of sight, it speeds up to 2.5 m/s until close. Cannot turn the breaker off.',tell:"Ability: drops a nearby player's sanity by 25% and leaves EMF 2/5 at the fuse box (breaker must be on).",gu:null},
+ {n:'Kormos',ev:['Orbs','SpiritBox','UV'],thr:'70% (sprinting) / 50%',spd:'1.7 / 2.21 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 70% if you sprint'],beh:'Can hunt at 70% if it detects a player sprinting in the same room. Cannot see players beyond 5m; moves 2.21 m/s when detecting someone beyond 5m through voice or electronics, 1.7 m/s within 5m.',tell:'Cannot perform airball/mist or chasing ghost events.',gu:null},
+ {n:'Mare',ev:['SpiritBox','Orbs','Writing'],thr:'60% (light off) / 40% (light on)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['60% lights off, 40% on'],beh:'Hunts at 60% if the room light is off (or broken), 40% if on. Wanders more with lights on. Cannot turn lights, TVs or monitors on.',tell:'Immediately switches off a light or lamp a player turns on within 4m, even during ghost events.',gu:null},
+ {n:'Moroi',ev:['SpiritBox','Writing','Freezing'],thr:'50%',spd:'1.5 to 2.25 m/s',sm:'Smudge blind 7s during hunt (vs 5s). 90s timer.',tags:['faster as sanity drops','smudge blind 7s'],beh:'Speed scales with how low average team sanity is: 1.5 m/s above 45%, up to 2.25 m/s at 0%.',tell:'Hearing a Spirit Box response or Parabolic/Recorder sound curses you: sanity drains 2x (cured by Sanity Meds).',gu:'SpiritBox'},
+ {n:'Myling',ev:['EMF','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['quiet footsteps'],beh:'Footsteps and vocals during hunts are quiet and cannot be heard beyond 12m (normal is 20m).',tell:'Flashlight test: footsteps are only heard while your flashlight flickers (within 10m). More frequent parabolic sounds (every 64 to 128s vs 80 to 128s).',gu:null},
+ {n:'Obake',ev:['EMF','UV','Orbs'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['odd fingerprints'],beh:'25% chance to leave no fingerprints. UV evidence fades twice as fast. 25% chance to skip footstep sounds during ghost events.',tell:'Unique prints: 6 fingers on doors/coolers, double prints on light switches, 5 fingers on keyboards. Shapeshifts its model on certain blinks during a hunt.',gu:'UV'},
+ {n:'Obambo',ev:['Writing','UV','DOTS'],thr:'65% (Aggressive) / 10% (Calm)',spd:'1.96 / 1.45 m/s',sm:'90s standard. 5s hunt blind.',tags:['65% or 10%, swaps every 2 min'],beh:'Switches between Aggressive (65%, 1.96 m/s) and Calm (10%, 1.45 m/s) every 2 minutes.',tell:'Aggressive hunts are 20% shorter. Can switch state mid-hunt, changing speed instantly.',gu:null},
+ {n:'Oni',ev:['EMF','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['very visible in hunts'],beh:'More active with several people nearby. Ghost events drain 20% sanity (vs 10%). Cannot perform airball/mist events.',tell:'Blinks much faster and stays visible longer during hunts, so the model is easy to see.',gu:null},
+ {n:'Onryo',ev:['SpiritBox','Orbs','Freezing'],thr:'60% / any % (flame blowout)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 60%','flames'],beh:'Extinguishing a flame acts like a crucifix. Every 3rd flame it blows out triggers a hunt attempt regardless of sanity, unless another lit flame is within 4m. Cannot hunt within 4m of a lit flame.',tell:'Only ghost that blows out a flame within 30s of lighting, twice within 20s, or a lighter within 20s. Cannot ignite fire sources.',gu:null},
+ {n:'Phantom',ev:['SpiritBox','UV','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['invisible in photos'],beh:'Drains 0.5% sanity/sec while you are in heartbeat range during hunts and events. Roams toward a random player leaving head-height EMF 2.',tell:'Disappears when photographed (no ghost in the photo, no electronic glitch). Blinks very slowly during hunts, invisible for long stretches.',gu:null},
+ {n:'Poltergeist',ev:['SpiritBox','UV','Writing'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['throws everything'],beh:'Throws items more often and harder (an item every 0.5s during hunts).',tell:"Polterbomb: throws many items at once, dropping nearby players' sanity 2% per item.",gu:null},
+ {n:'Raiju',ev:['EMF','Orbs','DOTS'],thr:'65% (near active tech) / 50%',spd:'2.5 m/s (tech) / 1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['65% and 2.5 m/s near tech'],beh:'Hunts at 65% near active player electronics. Moves 2.5 m/s near active electronics, 1.7 m/s otherwise.',tell:'Disrupts electronics and causes radio static from 15m away (vs 10m).',gu:null},
+ {n:'Revenant',ev:['Orbs','Writing','Freezing'],thr:'50%',spd:'1.0 m/s roaming / 3.0 m/s targeted',sm:'90s standard. 5s hunt blind.',tags:['1.0 crawl, 3.0 when it sees you'],beh:'Crawls at 1.0 m/s while searching without line of sight or electronics. Jumps to 3.0 m/s the moment it detects a player or electronics.',tell:'Dramatic speed contrast: slow crawl, then a rocket.',gu:null},
+ {n:'Shade',ev:['EMF','Writing','Freezing'],thr:'35%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 35%','shy'],beh:'Extremely shy. Cannot hunt, do ghost events, or EMF 2/3/5 interactions while a player is in the same room.',tell:'Only appears as a shadow during cursed possessions (Music Box, Summoning Circle, Monkey Paw). Cannot do singing events.',gu:null},
+ {n:'Spirit',ev:['EMF','SpiritBox','Writing'],thr:'50%',spd:'1.7 m/s',sm:'180s smudge timer (exception, standard is 90s).',tags:['smudge 3 min'],beh:'Standard behavior and speed.',tell:'Smudging stops a Spirit from hunting for a full 3 minutes, double the normal 90s.',gu:null},
+ {n:'Thaye',ev:['Orbs','Writing','DOTS'],thr:'75% (youngest) → 15% (oldest)',spd:'2.75 → 1.0 m/s',sm:'90s standard. 5s hunt blind.',tags:['75% and fast, ages down'],beh:'Ages every 1 to 2 minutes while a player is in its room. Starts at 75% threshold and 2.75 m/s, ages down to 15% and 1.0 m/s. No line-of-sight speedup.',tell:'Ouija Board reports an increasing age over time, and can state an age over 90.',gu:null},
+ {n:'The Mimic',ev:['SpiritBox','UV','Freezing'],thr:'Variable (copied ghost)',spd:'Variable (copied ghost)',sm:'Variable (copied ghost).',tags:['copies any ghost'],beh:'Copies the speed, sanity thresholds, smudge rules and behaviors of other ghosts, switching every 30 to 120 seconds. Behavior tells cannot rule it out.',tell:'Always shows fake Ghost Orbs as a 4th evidence (Spirit Box + UV + Freezing + fake Orbs).',gu:'Orbs',mimic:true},
+ {n:'The Twins',ev:['EMF','SpiritBox','Freezing'],thr:'50%',spd:'1.5 m/s (main) / 1.9 m/s (alt)',sm:'90s standard. 5s hunt blind.',tags:['1.5 or 1.9 m/s'],beh:'Either the Main Twin (1.5 m/s from the ghost location) or the Alt Twin (1.9 m/s, teleporting from a recent interaction spot) hunts, 50/50.',tell:'Interactions happen nearly simultaneously at short and long range, like two ghosts.',gu:null},
+ {n:'Wraith',ev:['EMF','SpiritBox','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['never touches salt'],beh:'Can teleport to a random player leaving foot-height EMF 2/5 before returning to its room. Never touches or steps in salt.',tell:'Never disturbs salt or triggers the Tier 3 salt slowdown during hunts.',gu:null},
+ {n:'Yokai',ev:['SpiritBox','Orbs','DOTS'],thr:'80% (talking) / 50% (quiet)',spd:'1.7 m/s',sm:'90s standard. 5s hunt blind.',tags:['hunts at 80% if you talk'],beh:'Talking near a Yokai raises its hunt threshold to 80% (50% if quiet).',tell:'Poor hearing and radio detection during hunts: only 2.5m (vs 7.5m to 9m).',gu:null},
+ {n:'Yurei',ev:['Orbs','Freezing','DOTS'],thr:'50%',spd:'1.7 m/s',sm:'Smudging traps it in its favorite room for 90s (no DOTS while trapped).',tags:['smudge traps it 90s'],beh:'Can slam a door fully shut and drop nearby player sanity by 15%.',tell:'Door interactions are always fully open or fully closed, never partial. Only ghost that closes exit doors outside hunts and events.',gu:null},
 ];
 
-// Behavior tells. l = tile label, i = icon id or tx = big text, t = full description, only = keep these ghosts, excl = remove these ghosts.
 const TELLS = [
  {g:'Hunt',items:[
-  {l:'Hunt above 50% sanity',tx:'50%',t:'Hunt started while average sanity was above 50%',only:['Yokai','Thaye','Demon','Kormos','Dayan','Obambo','Raiju','Gallu','Mare','Onryo']},
-  {l:'Hunt above 70% sanity',tx:'70%',t:'Hunt started while sanity was above 70%',only:['Yokai','Thaye','Demon','Onryo']},
+  {l:'Hunt above 50% sanity',tx:'50',t:'Hunt started while average sanity was above 50%',only:['Yokai','Thaye','Demon','Kormos','Dayan','Obambo','Raiju','Gallu','Mare','Onryo']},
+  {l:'Hunt above 70% sanity',tx:'70',t:'Hunt started while sanity was above 70%',only:['Yokai','Thaye','Demon','Onryo']},
   {l:'Very fast',i:'i-fast',t:'Over 2 m/s during the hunt, not from line-of-sight speedup',only:['Deildegast','Deogen','Dayan','Hantu','Jinn','Kormos','Moroi','Raiju','Revenant','Thaye']},
   {l:'Very slow',i:'i-slow',t:'Under 1.5 m/s during the hunt',only:['Deildegast','Deogen','Dayan','Hantu','Gallu','Obambo','Revenant','Thaye']},
   {l:'Speed shifted mid-hunt',i:'i-shift',t:'Speed changed sharply during one hunt',only:['Deogen','Revenant','Dayan','Hantu','Jinn','Raiju','Obambo']},
@@ -323,21 +346,21 @@ const TELLS = [
   {l:'Trapped in room',i:'i-lock',t:'After a smudge it would not leave its room and gave no DOTS',only:['Yurei']},
  ]},
  {g:'Gear',items:[
-  {l:'Breaker turned ON',i:'i-brkon',t:'Ghost turned the breaker on',excl:['Hantu']},
-  {l:'Breaker turned OFF',i:'i-brkoff',t:'Ghost turned the breaker off',excl:['Jinn']},
-  {l:'Light turned ON',i:'i-bulbon',t:'Ghost turned a light, TV or monitor on',excl:['Mare']},
+  {l:'Breaker turned on',i:'i-brkon',t:'Ghost turned the breaker on',excl:['Hantu']},
+  {l:'Breaker turned off',i:'i-brkoff',t:'Ghost turned the breaker off',excl:['Jinn']},
+  {l:'Light turned on',i:'i-bulbon',t:'Ghost turned a light, TV or monitor on',excl:['Mare']},
   {l:'Light cut off on me',i:'i-bulboff',t:'Light switched back off right after I turned it on',only:['Mare']},
   {l:'Flame blown out fast',i:'i-blow',t:'Blew out a flame right after lighting, or twice within 20s',only:['Onryo']},
   {l:'Lit a flame',i:'i-flame',t:'Ghost lit a candle or other fire source',excl:['Onryo']},
   {l:'Not in photo',i:'i-photo',t:'Ghost not visible in a photo, no glitch either',only:['Phantom']},
   {l:'Heavy breathing',i:'i-radio',t:'Heavy breathing on the Spirit Box',only:['Deogen']},
-  {l:'Siren / wail',i:'i-dish',t:'Siren or wail on the Parabolic Mic or Sound Recorder',only:['Banshee']},
+  {l:'Siren or wail',i:'i-dish',t:'Siren or wail on the Parabolic Mic or Sound Recorder',only:['Banshee']},
   {l:'Six-finger prints',i:'i-hand',t:'Six-finger, double, or five-finger fingerprints',only:['Obake']},
   {l:'No prints',i:'i-handslash',t:'Fingerprints missing after a clear interaction',only:['Obake']},
   {l:'DOTS on camera only',i:'i-video',t:'DOTS only visible through a video camera',only:['Goryo']},
   {l:'Ouija age 90+',i:'i-ouija',t:'Ouija age keeps rising or says over 90',only:['Thaye']},
   {l:'Fuse box EMF',i:'i-fuse',t:'EMF 2/5 at the fuse box with a 25% sanity drop',only:['Jinn']},
-  {l:'Door slam / exit door',i:'i-door',t:'Door slammed fully shut with a sanity drop, or an exit door closed outside a hunt',only:['Yurei']},
+  {l:'Door slam or exit door',i:'i-door',t:'Door slammed fully shut with a sanity drop, or an exit door closed outside a hunt',only:['Yurei']},
   {l:'Twin interactions',i:'i-twins',t:'Interactions far apart at almost the same time',only:['The Twins']},
   {l:'Far radio static',i:'i-antenna',t:'Radio static or electronics disrupted from unusually far away',only:['Raiju']},
  ]},
@@ -371,20 +394,20 @@ function reason(g){
   if(g.mimic){
     if(out.includes('Orbs'))return 'Mimic always shows Orbs';
     const fr=found.filter(k=>k!=='Orbs');
-    const bad=fr.find(k=>!set.has(k)); if(bad)return EVSHORT[bad]+' found';
+    const bad=fr.find(k=>!set.has(k)); if(bad)return 'no '+EVSHORT[bad];
     if(fr.length>n)return 'too many evidences for this difficulty';
     const outReal=out.filter(k=>set.has(k));
-    if(outReal.length>3-n)return 'ruled out: '+outReal.map(k=>EVSHORT[k]).join(', ');
+    if(outReal.length>3-n)return 'needs '+outReal.map(k=>EVSHORT[k]).join(', ');
   }else{
-    const bad=found.find(k=>!set.has(k)); if(bad)return EVSHORT[bad]+' found';
+    const bad=found.find(k=>!set.has(k)); if(bad)return 'no '+EVSHORT[bad];
     if(found.length>n)return 'too many evidences for this difficulty';
     const outIn=out.filter(k=>set.has(k));
-    if(n>0&&n<3&&g.gu&&out.includes(g.gu))return EVSHORT[g.gu]+' is guaranteed on this difficulty';
-    if(outIn.length>3-n)return 'ruled out: '+outIn.map(k=>EVSHORT[k]).join(', ');
+    if(n>0&&n<3&&g.gu&&out.includes(g.gu))return EVSHORT[g.gu]+' is guaranteed for it';
+    if(outIn.length>3-n)return 'needs '+outIn.map(k=>EVSHORT[k]).join(', ');
     if(S.sex==='m'&&FEMALE_ONLY.includes(g.n))return 'always a female model';
     for(const t of activeTells()){
-      if(t.only&&!t.only.includes(g.n))return 'tell: '+t.l;
-      if(t.excl&&t.excl.includes(g.n))return 'tell: '+t.l;
+      if(t.only&&!t.only.includes(g.n))return t.l;
+      if(t.excl&&t.excl.includes(g.n))return t.l;
     }
   }
   return null;
@@ -393,12 +416,11 @@ function reason(g){
 function renderEvidence(){
   const el=document.getElementById('evlist');
   el.innerHTML=EV.map(([k,name,,ic])=>`
-   <div class="ev" data-state="${S.ev[k]}" data-k="${k}">
+   <div class="ev" data-state="${S.ev[k]}" data-k="${k}" style="--evc:var(--ev-${k})">
      <div class="ev-name">${icon(ic)}<span>${name}</span></div>
-     <div class="tri" role="group" aria-label="${name}">
-       <button type="button" class="t-found" data-set="found" aria-pressed="${S.ev[k]==='found'}" title="Found">✓</button>
-       <button type="button" class="t-unk" data-set="unk" aria-pressed="${S.ev[k]==='unk'}" title="Unknown">·</button>
-       <button type="button" class="t-out" data-set="out" aria-pressed="${S.ev[k]==='out'}" title="Ruled out">✕</button>
+     <div class="duo" role="group" aria-label="${name}">
+       <button type="button" class="b-found" data-set="found" aria-pressed="${S.ev[k]==='found'}" title="Found">${icon('i-check')}</button>
+       <button type="button" class="b-out" data-set="out" aria-pressed="${S.ev[k]==='out'}" title="Ruled out">${icon('i-x')}</button>
      </div>
    </div>`).join('');
   document.querySelectorAll('#evcount button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.n===S.n)));
@@ -413,7 +435,7 @@ function renderTells(){
     const on=g.items.filter((it,ii)=>S.tells[tellId(gi,ii)]).length;
     return `<button type="button" role="tab" data-tab="${gi}" aria-pressed="${S.tab===gi}">${g.g}${on?`<span class="bd">${on}</span>`:''}</button>`}).join('');
   const act=activeTells();
-  document.getElementById('picked').innerHTML=act.map(t=>`<button type="button" class="chip" data-id="${tellId(t.gi,t.ii)}" title="Remove this clue">${t.tx?`<b>${t.tx}</b>`:icon(t.i)}${esc(t.l)} ✕</button>`).join('');
+  document.getElementById('picked').innerHTML=act.map(t=>`<button type="button" class="pchip" data-id="${tellId(t.gi,t.ii)}" title="Remove this clue">${t.tx?`<b>${t.tx}</b>`:icon(t.i)}${esc(t.l)}<span class="x">✕</span></button>`).join('');
   const g=TELLS[S.tab]||TELLS[0];
   const gi=TELLS.indexOf(g);
   document.getElementById('tiles').innerHTML=g.items.map((it,ii)=>{
@@ -431,29 +453,48 @@ function chip(g,k){
   let title=EVNAME[k];
   if(g.mimic&&k==='Orbs')title+=' (always shown, fake)';
   else if(g.gu===k)title+=' (guaranteed on Nightmare/Insanity)';
-  return `<span class="${cls}" title="${title}">${EVSHORT[k]}</span>`;
+  return `<span class="${cls}" style="--evc:var(--ev-${k})" title="${title}">${EVSHORT[k]}</span>`;
+}
+function tagHtml(g){
+  const hi=/^hunts/.test(g.tags[0]||'');
+  return g.tags.map((t,i)=>`<span class="tag ${i===0&&hi?'hi':''}">${esc(t)}</span>`).join('');
 }
 
 function renderRoster(){
   const alive=[],dead=[];
   G.forEach(g=>{const r=reason(g);(r?dead:alive).push({g,r})});
-  document.getElementById('remain').textContent=alive.length;
+  const nEl=document.getElementById('remain');
+  nEl.textContent=alive.length;
+  nEl.className='n'+(alive.length===1?' one':alive.length===0?' zero':'');
+  document.getElementById('remain-lbl').textContent=alive.length===1?'ghost identified':alive.length===0?'no match':(alive.length===30?'ghosts possible':'still possible');
+  document.getElementById('remain-sub').textContent='of 30';
+  document.getElementById('bar').innerHTML=Array.from({length:30},(_,i)=>`<i class="${i<alive.length?'on':''}"></i>`).join('');
   const ans=document.getElementById('answer');
   if(alive.length===1){
     const g=alive[0].g;
+    const keys=g.mimic?[...g.ev,'Orbs']:g.ev;
     ans.className='answer show';
-    ans.innerHTML=`<div class="k">Only one match</div><h2>${g.n}</h2><p><b>Hunts at ${g.thr}.</b> ${g.sm} Speed ${g.spd}.</p>`;
+    ans.innerHTML=`<div class="k">Only one ghost matches</div><h2>${g.n}</h2>
+      <div class="chips">${keys.map(k=>chip(g,k)).join('')}</div>
+      <div class="facts">
+        <p><span class="lbl">Hunts at</span>${g.thr}</p>
+        <p><span class="lbl">Speed</span>${g.spd}</p>
+        <p><span class="lbl">Smudge</span>${g.sm}</p>
+        <p><span class="lbl">Behavior</span>${g.beh}</p>
+        <p><span class="lbl">Unique tell</span>${g.tell}</p>
+      </div>`;
   }else{ans.className='answer';ans.innerHTML=''}
   const grid=document.getElementById('grid');
-  grid.innerHTML=alive.map(({g})=>{
+  grid.innerHTML=alive.length===1?'':alive.map(({g})=>{
     const keys=g.mimic?[...g.ev,'Orbs']:g.ev;
-    const open=S.open['c:'+g.n]||alive.length===1;
-    return `<article class="card ${open?'open':''} ${alive.length===1?'one':''}" data-g="${g.n}">
+    const open=S.open['c:'+g.n];
+    return `<article class="card ${open?'open':''}" data-g="${g.n}">
       <button type="button" class="card-top" data-exp="${g.n}" aria-expanded="${!!open}" title="${open?'Collapse':'Expand'} ${g.n}">
-        <div class="card-h"><h3>${g.n}</h3><span class="thr">${g.thr}</span></div>
+        <div class="card-h"><h3>${g.n}</h3><span class="tags">${tagHtml(g)}</span></div>
         <div class="chips">${keys.map(k=>chip(g,k)).join('')}</div>
       </button>
       <div class="more">
+        <p><span class="lbl">Hunts at</span>${g.thr}</p>
         <p><span class="lbl">Speed</span>${g.spd}</p>
         <p><span class="lbl">Smudge</span>${g.sm}</p>
         <p><span class="lbl">Behavior</span>${g.beh}</p>
@@ -463,8 +504,7 @@ function renderRoster(){
   document.getElementById('empty').hidden=alive.length!==0;
   const ol=document.getElementById('outlist');
   ol.hidden=dead.length===0;
-  document.getElementById('outn').textContent=dead.length+' of 30';
-  document.getElementById('outchips').innerHTML=dead.map(({g,r})=>`<span class="chip" title="${esc(r)}">${g.n}</span>`).join('');
+  document.getElementById('outchips').innerHTML=dead.map(({g,r})=>`<button type="button" class="ochip" data-why="${g.n}" aria-expanded="${!!S.open['w:'+g.n]}">${g.n}<span class="why">${esc(r)}</span></button>`).join('');
   const found=ALLKEYS.filter(k=>S.ev[k]==='found');
   const nt=document.getElementById('notice');
   if(found.length>S.n){
@@ -474,7 +514,7 @@ function renderRoster(){
       :`<b>${found.length} evidences on a ${S.n}-evidence contract.</b> Check the evidence count or re-verify one of these.`;
   }else if(S.n<3&&S.n>0){
     nt.hidden=false;
-    nt.innerHTML=`<b>${S.n===2?'Nightmare':'Insanity'}:</b> one evidence stays hidden, so a ruled-out evidence only removes a ghost once more are ruled out than it can hide. Outlined chips are guaranteed to show if the ghost has them.`;
+    nt.innerHTML=`<b>${S.n===2?'Nightmare':'Insanity'}:</b> one evidence stays hidden, so ruling one out only removes a ghost once more are ruled out than it can hide. Outlined chips are guaranteed to show if the ghost has them.`;
   }else if(S.n===0){
     nt.hidden=false;
     nt.innerHTML=`<b>Zero evidence:</b> evidence toggles cannot narrow anything except Orbs, which still rules the Mimic in or out. Work from behavior tells.`;
@@ -485,7 +525,7 @@ function renderAll(){renderEvidence();renderTells();renderRoster();save()}
 
 document.getElementById('evlist').addEventListener('click',e=>{
   const b=e.target.closest('button[data-set]');if(!b)return;
-  const k=b.closest('.ev').dataset.k;S.ev[k]=b.dataset.set;renderAll();
+  const k=b.closest('.ev').dataset.k;S.ev[k]=(S.ev[k]===b.dataset.set)?'unk':b.dataset.set;renderAll();
 });
 document.getElementById('evcount').addEventListener('click',e=>{
   const b=e.target.closest('button[data-n]');if(!b)return;S.n=+b.dataset.n;renderAll();
@@ -507,6 +547,10 @@ document.getElementById('picked').addEventListener('click',e=>{
 document.getElementById('grid').addEventListener('click',e=>{
   const b=e.target.closest('button[data-exp]');if(!b)return;
   const k='c:'+b.dataset.exp;S.open[k]=!S.open[k];renderRoster();save();
+});
+document.getElementById('outchips').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-why]');if(!b)return;
+  const k='w:'+b.dataset.why;S.open[k]=!S.open[k];renderRoster();save();
 });
 document.getElementById('reset').addEventListener('click',()=>{const n=S.n,tab=S.tab;S=fresh();S.n=n;S.tab=tab;renderAll()});
 renderAll();
